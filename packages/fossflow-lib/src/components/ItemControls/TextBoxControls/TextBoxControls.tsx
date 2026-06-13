@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ProjectionOrientationEnum } from 'src/types';
 import {
   Box,
@@ -6,12 +6,15 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Slider,
-  IconButton as MUIIconButton
+  IconButton as MUIIconButton,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import {
   TextRotationNone as TextRotationNoneIcon,
   Close as CloseIcon
 } from '@mui/icons-material';
+import { CustomColorInput } from 'src/components/ColorSelector/CustomColorInput';
 import { useTextBox } from 'src/hooks/useTextBox';
 import { useUiStateStore } from 'src/stores/uiStateStore';
 import { getIsoProjectionCss } from 'src/utils';
@@ -30,6 +33,7 @@ export const TextBoxControls = ({ id }: Props) => {
   });
   const textBox = useTextBox(id);
   const { updateTextBox, deleteTextBox } = useScene();
+  const [useCustomColor, setUseCustomColor] = useState(!!textBox?.color);
 
   // If textBox doesn't exist, return null
   if (!textBox) {
@@ -97,6 +101,27 @@ export const TextBoxControls = ({ id }: Props) => {
               />
             </ToggleButton>
           </ToggleButtonGroup>
+        </Section>
+        <Section title="Text color">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={useCustomColor}
+                onChange={(e) => {
+                  setUseCustomColor(e.target.checked);
+                  if (!e.target.checked) updateTextBox(textBox.id, { color: '' });
+                }}
+              />
+            }
+            label="Custom color"
+            sx={{ mb: useCustomColor ? 1 : 0 }}
+          />
+          {useCustomColor && (
+            <CustomColorInput
+              value={textBox.color || '#000000'}
+              onChange={(color) => updateTextBox(textBox.id, { color })}
+            />
+          )}
         </Section>
         <Section>
           <Box>

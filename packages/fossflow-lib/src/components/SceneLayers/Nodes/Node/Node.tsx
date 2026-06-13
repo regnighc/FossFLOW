@@ -1,5 +1,5 @@
-import React, { useMemo, memo } from 'react';
-import { Box, Typography, Stack } from '@mui/material';
+import React, { useMemo, memo, useState } from 'react';
+import { Box, Typography } from '@mui/material';
 import {
   PROJECTED_TILE_SIZE,
   DEFAULT_LABEL_HEIGHT,
@@ -19,7 +19,8 @@ interface Props {
 
 export const Node = memo(({ node, order }: Props) => {
   const modelItem = useModelItem(node.id);
-  const { iconComponent } = useIcon(modelItem?.icon);
+  const { iconComponent } = useIcon(modelItem?.icon, node.iconScale, node.iconRotation);
+  const [showDescription, setShowDescription] = useState(true);
 
   const position = useMemo(() => {
     return getTilePosition({
@@ -39,10 +40,11 @@ export const Node = memo(({ node, order }: Props) => {
     return modelItem.description;
   }, [modelItem?.description]);
 
-  // If modelItem doesn't exist, don't render the node
   if (!modelItem) {
     return null;
   }
+
+  const nameAlign = node.nameAlign ?? 'center';
 
   return (
     <Box
@@ -52,7 +54,7 @@ export const Node = memo(({ node, order }: Props) => {
       }}
     >
       <Box
-        sx={{ 
+        sx={{
           position: 'absolute',
           display: 'flex',
           justifyContent: 'center',
@@ -80,15 +82,48 @@ export const Node = memo(({ node, order }: Props) => {
               expandDirection="BOTTOM"
               labelHeight={node.labelHeight ?? DEFAULT_LABEL_HEIGHT}
             >
-              <Stack spacing={1}>
+              <Box sx={{ position: 'relative' }}>
                 {modelItem.name && (
-                  <Typography fontWeight={600} sx={{ color: 'var(--ff-label-text, rgba(0,0,0,0.87))' }}>{modelItem.name}</Typography>
+                  <Typography
+                    fontWeight={600}
+                    sx={{
+                      textAlign: nameAlign,
+                      color: 'var(--ff-label-text, rgba(0,0,0,0.87))',
+                      pr: description ? 2 : 0
+                    }}
+                  >
+                    {modelItem.name}
+                  </Typography>
                 )}
-                {modelItem.description &&
-                  modelItem.description !== MARKDOWN_EMPTY_VALUE && (
-                    <RichTextEditor value={modelItem.description} readOnly />
-                  )}
-              </Stack>
+                {description && showDescription && (
+                  <RichTextEditor value={description} readOnly />
+                )}
+                {description && (
+                  <Box
+                    component="button"
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setShowDescription(s => !s);
+                    }}
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      right: 0,
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '0 2px',
+                      fontSize: '0.6rem',
+                      color: 'var(--ff-label-text)',
+                      opacity: 0.45,
+                      lineHeight: 1,
+                      '&:hover': { opacity: 1 }
+                    }}
+                  >
+                    {showDescription ? '⌃' : '⌄'}
+                  </Box>
+                )}
+              </Box>
             </ExpandableLabel>
           </Box>
         )}

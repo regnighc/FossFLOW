@@ -86,16 +86,12 @@ export function ViewTabBar({ views, currentViewId, onSwitch, onAdd, onRename, on
             </div>
           );
         })}
+        {!readonly && (
+          <button className="view-tab-add-inline" onClick={onAdd} title="Add new view">
+            +
+          </button>
+        )}
       </div>
-
-      {!readonly && (
-        <button className="view-tab-add" onClick={onAdd} title="Add new view">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-          </svg>
-          <span>Add view</span>
-        </button>
-      )}
     </div>
   );
 }

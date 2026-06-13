@@ -98,11 +98,21 @@ async function captureThumbnail(): Promise<string | null> {
   }
 }
 
-async function exportCanvasImage(name: string) {
+async function exportCanvasImage(name: string, backgroundColor?: string) {
   const canvas = document.querySelector('.fossflow-container canvas') as HTMLCanvasElement | null;
   if (!canvas) { alert('Could not capture the diagram canvas.'); return; }
   return new Promise<void>(resolve => {
-    canvas.toBlob(blob => {
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = canvas.width;
+    exportCanvas.height = canvas.height;
+    const ctx = exportCanvas.getContext('2d');
+    if (!ctx) { alert('Export failed.'); resolve(); return; }
+    if (backgroundColor) {
+      ctx.fillStyle = backgroundColor;
+      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
+    }
+    ctx.drawImage(canvas, 0, 0);
+    exportCanvas.toBlob(blob => {
       if (!blob) { alert('Export failed.'); resolve(); return; }
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -440,7 +450,8 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
 
   // Export image
   const handleExportImage = async () => {
-    await exportCanvasImage(diagramName);
+    const bgColor = theme === 'dark' ? '#1e293b' : '#f6faff';
+    await exportCanvasImage(diagramName, bgColor);
   };
 
   // Diagram name editing
@@ -510,8 +521,11 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
 
   const addView = () => {
     const views = getActiveViews();
+    const newId = typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9);
     const newView = {
-      id: crypto.randomUUID(),
+      id: newId,
       name: `View ${views.length + 1}`,
       items: [],
       connectors: [],

@@ -6,9 +6,12 @@ import { getIsoProjectionCss } from 'src/utils';
 
 interface Props {
   icon: Icon;
+  scale?: number;
+  rotation?: number;
 }
 
-export const NonIsometricIcon = ({ icon }: Props) => {
+export const NonIsometricIcon = ({ icon, scale, rotation = 0 }: Props) => {
+  const effectiveScale = scale ?? icon.scale ?? 1;
   return (
     <Box sx={{ pointerEvents: 'none' }}>
       <Box
@@ -17,14 +20,14 @@ export const NonIsometricIcon = ({ icon }: Props) => {
           left: -PROJECTED_TILE_SIZE.width / 2,
           top: -PROJECTED_TILE_SIZE.height / 2,
           transformOrigin: 'top left',
-          transform: getIsoProjectionCss()
+          transform: `${getIsoProjectionCss()} rotate(${rotation}deg)`
         }}
       >
         <Box
           component="img"
           src={icon.url}
           alt={`icon-${icon.id}`}
-          sx={{ width: PROJECTED_TILE_SIZE.width * 0.7 * (icon.scale || 1) }}
+          sx={{ width: PROJECTED_TILE_SIZE.width * 0.7 * effectiveScale }}
         />
       </Box>
     </Box>

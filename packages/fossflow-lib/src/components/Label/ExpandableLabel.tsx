@@ -11,6 +11,7 @@ type Props = Omit<LabelProps, 'maxHeight'> & {
 };
 
 const STANDARD_LABEL_HEIGHT = 80;
+const COLLAPSED_LABEL_HEIGHT = 38;
 
 export const ExpandableLabel = ({
   children,
@@ -20,7 +21,7 @@ export const ExpandableLabel = ({
   const forceExpandLabels = useUiStateStore((state) => state.expandLabels);
   const editorMode = useUiStateStore((state) => state.editorMode);
   const labelSettings = useUiStateStore((state) => state.labelSettings);
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
   const { observe, size: contentSize } = useResizeObserver();
 
@@ -37,11 +38,11 @@ export const ExpandableLabel = ({
   }, [forceExpandLabels, isExpanded, editorMode]);
 
   const containerMaxHeight = useMemo(() => {
-    return effectiveExpanded ? undefined : STANDARD_LABEL_HEIGHT;
+    return effectiveExpanded ? undefined : COLLAPSED_LABEL_HEIGHT;
   }, [effectiveExpanded]);
 
   const isContentTruncated = useMemo(() => {
-    return !effectiveExpanded && contentSize.height >= STANDARD_LABEL_HEIGHT - 10;
+    return !effectiveExpanded && contentSize.height >= COLLAPSED_LABEL_HEIGHT - 10;
   }, [effectiveExpanded, contentSize.height]);
 
   // Determine overflow behavior based on mode

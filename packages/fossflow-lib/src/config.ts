@@ -42,7 +42,10 @@ export const VIEW_DEFAULTS: Required<
 };
 
 export const VIEW_ITEM_DEFAULTS: Required<Omit<ViewItem, 'id' | 'tile'>> = {
-  labelHeight: 80
+  labelHeight: 80,
+  iconScale: 1,
+  iconRotation: 0,
+  nameAlign: 'center'
 };
 
 export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {
@@ -73,7 +76,8 @@ export const CONNECTOR_SEARCH_OFFSET = { x: 1, y: 1 };
 export const TEXTBOX_DEFAULTS: Required<Omit<TextBox, 'id' | 'tile'>> = {
   orientation: 'X',
   fontSize: 0.6,
-  content: 'Text'
+  content: 'Text',
+  color: ''
 };
 
 export const TEXTBOX_PADDING = 0.2;

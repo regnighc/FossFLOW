@@ -1,9 +1,5 @@
 import React from 'react';
-import { Button as MuiButton, SxProps } from '@mui/material';
-import {
-  ExpandMore as ReadMoreIcon,
-  ExpandLess as ReadLessIcon
-} from '@mui/icons-material';
+import { Box, SxProps } from '@mui/material';
 
 interface Props {
   isExpanded: boolean;
@@ -13,25 +9,23 @@ interface Props {
 
 export const ExpandButton = ({ isExpanded, onClick, sx }: Props) => {
   return (
-    <MuiButton
+    <Box
+      component="button"
+      onClick={onClick}
       sx={{
-        px: 0.5,
-        py: 0,
-        height: 'auto',
-        minWidth: 0,
-        fontSize: '0.7em',
-        bottom: 5,
-        right: 5,
-        color: 'common.white',
+        background: 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '2px 4px',
+        fontSize: '0.6rem',
+        color: 'var(--ff-label-text, rgba(0,0,0,0.6))',
+        opacity: 0.45,
+        lineHeight: 1,
+        '&:hover': { opacity: 1 },
         ...sx
       }}
-      onClick={onClick}
     >
-      {isExpanded ? (
-        <ReadLessIcon sx={{ color: 'common.white' }} />
-      ) : (
-        <ReadMoreIcon sx={{ color: 'common.white' }} />
-      )}
-    </MuiButton>
+      {isExpanded ? '⌃' : '⌄'}
+    </Box>
   );
 };
