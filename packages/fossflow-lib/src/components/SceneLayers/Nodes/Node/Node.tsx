@@ -15,9 +15,10 @@ import { RichTextEditor } from 'src/components/RichTextEditor/RichTextEditor';
 interface Props {
   node: ViewItem;
   order: number;
+  dimmed?: boolean;
 }
 
-export const Node = memo(({ node, order }: Props) => {
+export const Node = memo(({ node, order, dimmed = false }: Props) => {
   const modelItem = useModelItem(node.id);
   const { iconComponent } = useIcon(modelItem?.icon, node.iconScale, node.iconRotation);
   const [showDescription, setShowDescription] = useState(true);
@@ -50,7 +51,9 @@ export const Node = memo(({ node, order }: Props) => {
     <Box
       sx={{
         position: 'absolute',
-        zIndex: order
+        zIndex: order,
+        opacity: dimmed ? 0.12 : 1,
+        transition: 'opacity 0.2s ease-in-out'
       }}
     >
       <Box

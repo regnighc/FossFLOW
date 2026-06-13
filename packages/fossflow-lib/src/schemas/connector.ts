@@ -49,5 +49,11 @@ export const connectorSchema = z.object({
   arrowColor: z.string().optional(),
   // Additional arrows at arbitrary positions along the connector (0–100%)
   arrows: z.array(z.object({ id, position: z.number().min(0).max(100) })).max(20).optional(),
-  anchors: z.array(anchorSchema)
+  anchors: z.array(anchorSchema),
+  // 2-way arrows
+  showStartArrow: z.boolean().optional(),
+  // Traveling circle animation
+  circleAnimate: z.boolean().optional(),
+  circleSize: z.number().optional(),
+  circleSpeed: z.number().optional()
 });

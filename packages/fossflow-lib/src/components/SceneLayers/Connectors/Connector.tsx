@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, memo, useRef } from 'react';
 import { useTheme, Box } from '@mui/material';
 import { UNPROJECTED_TILE_SIZE } from 'src/config';
 import {
@@ -63,7 +63,6 @@ const buildOffsetPolyline = (
   return points.join(' ');
 };
 
-/** Compute arrow position and rotation at a percentage (0–100) along the tile path. */
 const getArrowAtPercent = (
   tiles: { x: number; y: number }[],
   percent: number,
@@ -94,7 +93,9 @@ const getArrowAtPercent = (
   return { x, y, rotation };
 };
 
-// Unique per-instance ID for SVG animate elements (avoids DOM id collisions)
+// Shared epoch for cross-connector animation sync
+const PAGE_LOAD_MS = Date.now();
+
 let _animCounter = 0;
 
 export const Connector = memo(({ connector: _connector, isSelected, groupIndex = 0, groupTotal = 1, dimmed = false }: Props) => {
@@ -104,63 +105,46 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
   const { currentView } = useScene();
   const connector = useConnector(_connector.id);
 
-  if (!connector) {
-    return null;
-  }
+  // Capture animation begin time once per mount (for sync)
+  const circleBeginRef = useRef<string | null>(null);
+
+  if (!connector) return null;
 
   const color = connector.customColor
     ? { value: connector.customColor }
     : predefinedColor;
 
-  if (!color) {
-    return null;
-  }
+  if (!color) return null;
 
   const { css, pxSize } = useIsoProjection({
     ...connector.path.rectangle
   });
 
-  const drawOffset = useMemo(() => {
-    return {
-      x: UNPROJECTED_TILE_SIZE / 2,
-      y: UNPROJECTED_TILE_SIZE / 2
-    };
-  }, []);
+  const drawOffset = useMemo(() => ({
+    x: UNPROJECTED_TILE_SIZE / 2,
+    y: UNPROJECTED_TILE_SIZE / 2
+  }), []);
 
-  const connectorWidthPx = useMemo(() => {
-    return (UNPROJECTED_TILE_SIZE / 100) * connector.width;
-  }, [connector.width]);
-
-  const groupOffsetPx = useMemo(() => {
-    return getGroupOffset(groupIndex, groupTotal, UNPROJECTED_TILE_SIZE);
-  }, [groupIndex, groupTotal]);
+  const connectorWidthPx = useMemo(() => (UNPROJECTED_TILE_SIZE / 100) * connector.width, [connector.width]);
+  const groupOffsetPx = useMemo(() => getGroupOffset(groupIndex, groupTotal, UNPROJECTED_TILE_SIZE), [groupIndex, groupTotal]);
 
   const pathString = useMemo(() => {
-    if (groupTotal > 1) {
-      return buildOffsetPolyline(connector.path.tiles, drawOffset, groupOffsetPx);
-    }
-    return connector.path.tiles.reduce((acc, tile) => {
-      return `${acc} ${tile.x * UNPROJECTED_TILE_SIZE + drawOffset.x},${
-        tile.y * UNPROJECTED_TILE_SIZE + drawOffset.y
-      }`;
-    }, '');
+    if (groupTotal > 1) return buildOffsetPolyline(connector.path.tiles, drawOffset, groupOffsetPx);
+    return connector.path.tiles.reduce((acc, tile) =>
+      `${acc} ${tile.x * UNPROJECTED_TILE_SIZE + drawOffset.x},${tile.y * UNPROJECTED_TILE_SIZE + drawOffset.y}`, '');
   }, [connector.path.tiles, drawOffset, groupTotal, groupOffsetPx]);
 
   const offsetPaths = useMemo(() => {
     if (!connector.lineType || connector.lineType === 'SINGLE') return null;
-
     const tiles = connector.path.tiles;
     if (tiles.length < 2) return null;
-
     const doubleOffset = connectorWidthPx * 3;
-
     if (groupTotal > 1) {
       return {
         path1: buildOffsetPolyline(tiles, drawOffset, groupOffsetPx + doubleOffset),
         path2: buildOffsetPolyline(tiles, drawOffset, groupOffsetPx - doubleOffset)
       };
     }
-
     return {
       path1: buildOffsetPolyline(tiles, drawOffset, doubleOffset),
       path2: buildOffsetPolyline(tiles, drawOffset, -doubleOffset)
@@ -169,65 +153,68 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
 
   const anchorPositions = useMemo(() => {
     if (!isSelected) return [];
-
     return connector.anchors.map((anchor) => {
       const position = getAnchorTile(anchor, currentView);
-
       return {
         id: anchor.id,
-        x:
-          (connector.path.rectangle.from.x - position.x) *
-            UNPROJECTED_TILE_SIZE +
-          drawOffset.x,
-        y:
-          (connector.path.rectangle.from.y - position.y) *
-            UNPROJECTED_TILE_SIZE +
-          drawOffset.y
+        x: (connector.path.rectangle.from.x - position.x) * UNPROJECTED_TILE_SIZE + drawOffset.x,
+        y: (connector.path.rectangle.from.y - position.y) * UNPROJECTED_TILE_SIZE + drawOffset.y
       };
     });
-  }, [
-    currentView,
-    connector.path.rectangle,
-    connector.anchors,
-    drawOffset,
-    isSelected
-  ]);
+  }, [currentView, connector.path.rectangle, connector.anchors, drawOffset, isSelected]);
 
-  const directionIcon = useMemo(() => {
-    return getConnectorDirectionIcon(connector.path.tiles);
-  }, [connector.path.tiles]);
+  const directionIcon = useMemo(() => getConnectorDirectionIcon(connector.path.tiles), [connector.path.tiles]);
+
+  const startArrowPos = useMemo(() => {
+    if (!connector.showStartArrow) return null;
+    const pos = getArrowAtPercent(connector.path.tiles, 0, drawOffset);
+    if (!pos) return null;
+    return { ...pos, rotation: (pos.rotation + 180) % 360 };
+  }, [connector.path.tiles, drawOffset, connector.showStartArrow]);
 
   const isFlow = connector.style === 'FLOW';
-  // flowAnimate: animate any style (explicit flag), or always-on for FLOW style
   const isAnimated = isFlow || connector.flowAnimate === true;
   const isForward = (connector.flowDirection ?? 'FORWARD') === 'FORWARD';
   const dashLen = connectorWidthPx * 4;
   const gapLen = connectorWidthPx * 2;
-  // After scale(-1,1) the SVG X-axis is mirrored, so positive dashoffset = backward visually.
-  // To flow FORWARD (toward the arrow): use negative offset; BACKWARD: positive.
   const animTo = isForward ? -(dashLen + gapLen) : (dashLen + gapLen);
 
   const strokeDashArray = useMemo(() => {
     switch (connector.style) {
-      case 'DASHED':
-        return `${connectorWidthPx * 2}, ${connectorWidthPx * 2}`;
-      case 'DOTTED':
-        return `0, ${connectorWidthPx * 1.8}`;
-      case 'FLOW':
-        return `${dashLen}, ${gapLen}`;
-      case 'SOLID':
-      default:
-        return 'none';
+      case 'DASHED': return `${connectorWidthPx * 2}, ${connectorWidthPx * 2}`;
+      case 'DOTTED': return `0, ${connectorWidthPx * 1.8}`;
+      case 'FLOW': return `${dashLen}, ${gapLen}`;
+      default: return 'none';
     }
   }, [connector.style, connectorWidthPx, dashLen, gapLen]);
 
-  // Additional arrows at custom positions along the path
   const additionalArrows = useMemo(() => {
     if (!connector.arrows || connector.arrows.length === 0) return [];
     return connector.arrows
       .map(a => ({ id: a.id, pos: getArrowAtPercent(connector.path.tiles, a.position, drawOffset) }))
       .filter(a => a.pos !== null) as { id: string; pos: { x: number; y: number; rotation: number } }[];
   }, [connector.arrows, connector.path.tiles, drawOffset]);
+
+  // Circle animation
+  const circleAnimate = connector.circleAnimate === true;
+  const circleSpeed = connector.circleSpeed ?? 2;
+  const circleRadius = connectorWidthPx * 1.5 * (connector.circleSize ?? 1);
+
+  // Capture begin time once; recompute only when animation is toggled or speed changes
+  const circleBegin = useMemo(() => {
+    if (!circleAnimate) { circleBeginRef.current = null; return '0'; }
+    const elapsed = (Date.now() - PAGE_LOAD_MS) / 1000;
+    const offset = (elapsed % circleSpeed).toFixed(3);
+    circleBeginRef.current = `-${offset}s`;
+    return circleBeginRef.current;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [circleAnimate, circleSpeed]);
+
+  const motionPath = useMemo(() => {
+    const pts = pathString.trim().split(/\s+/).filter(Boolean);
+    if (pts.length < 2) return '';
+    return 'M ' + pts[0] + ' L ' + pts.slice(1).join(' L ');
+  }, [pathString]);
 
   const lineType = connector.lineType || 'SINGLE';
   const arrowShape = connector.arrowShape || 'TRIANGLE';
@@ -258,7 +245,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     </g>
   );
 
-  // SVG animate element for smooth GPU-accelerated dash flow (avoids CSS keyframe injection churn)
   const svgAnimate = (isAnimated && strokeDashArray !== 'none') ? (
     <animate
       attributeName="stroke-dashoffset"
@@ -270,14 +256,11 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     />
   ) : null;
 
+  const circleColor = getColorVariant(color.value, 'dark', { grade: 1 });
+
   return (
-    <Box style={{ ...css, opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.2s ease-in-out' }}>
-      <Svg
-        style={{
-          transform: 'scale(-1, 1)'
-        }}
-        viewboxSize={pxSize}
-      >
+    <Box style={{ ...css, opacity: dimmed ? 0.15 : 1, transition: 'opacity 0.2s ease-in-out' }}>
+      <Svg style={{ transform: 'scale(-1, 1)' }} viewboxSize={pxSize}>
         {lineType === 'SINGLE' ? (
           <>
             <polyline
@@ -292,7 +275,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
             />
             <polyline
               points={pathString}
-              stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
+              stroke={circleColor}
               strokeWidth={connectorWidthPx}
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -304,59 +287,24 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
           </>
         ) : offsetPaths ? (
           <>
-            <polyline
-              points={offsetPaths.path1}
-              stroke={theme.palette.common.white}
-              strokeWidth={connectorWidthPx * 1.4}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeOpacity={0.7}
-              strokeDasharray={strokeDashArray}
-              fill="none"
-            />
-            <polyline
-              points={offsetPaths.path1}
-              stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
-              strokeWidth={connectorWidthPx}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={strokeDashArray}
-              fill="none"
-            >
+            <polyline points={offsetPaths.path1} stroke={theme.palette.common.white} strokeWidth={connectorWidthPx * 1.4} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.7} strokeDasharray={strokeDashArray} fill="none" />
+            <polyline points={offsetPaths.path1} stroke={circleColor} strokeWidth={connectorWidthPx} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={strokeDashArray} fill="none">
               {svgAnimate}
             </polyline>
-            <polyline
-              points={offsetPaths.path2}
-              stroke={theme.palette.common.white}
-              strokeWidth={connectorWidthPx * 1.4}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeOpacity={0.7}
-              strokeDasharray={strokeDashArray}
-              fill="none"
-            />
-            <polyline
-              points={offsetPaths.path2}
-              stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
-              strokeWidth={connectorWidthPx}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeDasharray={strokeDashArray}
-              fill="none"
-            >
+            <polyline points={offsetPaths.path2} stroke={theme.palette.common.white} strokeWidth={connectorWidthPx * 1.4} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.7} strokeDasharray={strokeDashArray} fill="none" />
+            <polyline points={offsetPaths.path2} stroke={circleColor} strokeWidth={connectorWidthPx} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={strokeDashArray} fill="none">
               {svgAnimate}
             </polyline>
           </>
         ) : null}
 
-        {/* Circle for port-channel representation */}
+        {/* Port-channel circle */}
         {lineType === 'DOUBLE_WITH_CIRCLE' && connector.path.tiles.length >= 2 && (() => {
           const midIndex = Math.floor(connector.path.tiles.length / 2);
           const midTile = connector.path.tiles[midIndex];
           const { dx, dy } = getPerpendicularAt(connector.path.tiles, midIndex);
           const x = midTile.x * UNPROJECTED_TILE_SIZE + drawOffset.x + dx * groupOffsetPx;
           const y = midTile.y * UNPROJECTED_TILE_SIZE + drawOffset.y + dy * groupOffsetPx;
-
           let rotation = 0;
           if (midIndex > 0 && midIndex < connector.path.tiles.length - 1) {
             const prevTile = connector.path.tiles[midIndex - 1];
@@ -365,44 +313,61 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
             const rdy = nextTile.y - prevTile.y;
             rotation = Math.atan2(rdy, rdx) * (180 / Math.PI);
           }
-
           const circleRadiusX = connectorWidthPx * 5;
           const circleRadiusY = connectorWidthPx * 4;
-
           return (
             <g transform={`translate(${x}, ${y}) rotate(${rotation})`}>
-              <ellipse
-                cx={0} cy={0} rx={circleRadiusX} ry={circleRadiusY}
-                fill="none"
-                stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
-                strokeWidth={connectorWidthPx * 0.8}
-              />
-              <ellipse
-                cx={0} cy={0} rx={circleRadiusX} ry={circleRadiusY}
-                fill="none"
-                stroke={theme.palette.common.white}
-                strokeWidth={connectorWidthPx * 1.2}
-                strokeOpacity={0.5}
-              />
+              <ellipse cx={0} cy={0} rx={circleRadiusX} ry={circleRadiusY} fill="none" stroke={circleColor} strokeWidth={connectorWidthPx * 0.8} />
+              <ellipse cx={0} cy={0} rx={circleRadiusX} ry={circleRadiusY} fill="none" stroke={theme.palette.common.white} strokeWidth={connectorWidthPx * 1.2} strokeOpacity={0.5} />
             </g>
           );
         })()}
 
-        {anchorPositions.map((anchor) => {
-          return (
-            <g key={anchor.id}>
-              <Circle tile={anchor} radius={18} fill={theme.palette.common.white} fillOpacity={0.7} />
-              <Circle tile={anchor} radius={12} stroke={theme.palette.common.black} fill={theme.palette.common.white} strokeWidth={6} />
-            </g>
-          );
-        })}
+        {anchorPositions.map((anchor) => (
+          <g key={anchor.id}>
+            <Circle tile={anchor} radius={18} fill={theme.palette.common.white} fillOpacity={0.7} />
+            <Circle tile={anchor} radius={12} stroke={theme.palette.common.black} fill={theme.palette.common.white} strokeWidth={6} />
+          </g>
+        ))}
 
-        {/* Primary direction arrow at the end */}
+        {/* End arrow */}
         {directionIcon && connector.showArrow !== false &&
           renderArrow(directionIcon.x, directionIcon.y, directionIcon.rotation ?? 0, 'dir')}
 
-        {/* User-defined additional arrows at arbitrary positions */}
+        {/* Start arrow (2-way) */}
+        {startArrowPos &&
+          renderArrow(startArrowPos.x, startArrowPos.y, startArrowPos.rotation, 'start-dir')}
+
+        {/* Additional arrows */}
         {additionalArrows.map(a => renderArrow(a.pos.x, a.pos.y, a.pos.rotation, a.id))}
+
+        {/* Traveling circle animation */}
+        {circleAnimate && motionPath && (
+          <>
+            <circle r={circleRadius + 2} fill={theme.palette.common.white} fillOpacity={0.6}>
+              <animateMotion
+                path={motionPath}
+                dur={`${circleSpeed}s`}
+                repeatCount="indefinite"
+                keyPoints={isForward ? '0;1' : '1;0'}
+                keyTimes="0;1"
+                calcMode="linear"
+                begin={circleBegin}
+              />
+            </circle>
+            <circle r={circleRadius} fill={circleColor}>
+              <animateMotion
+                path={motionPath}
+                dur={`${circleSpeed}s`}
+                repeatCount="indefinite"
+                keyPoints={isForward ? '0;1' : '1;0'}
+                keyTimes="0;1"
+                calcMode="linear"
+                begin={circleBegin}
+              />
+            </circle>
+          </>
+        )}
       </Svg>
     </Box>
   );

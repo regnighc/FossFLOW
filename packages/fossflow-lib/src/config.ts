@@ -66,7 +66,11 @@ export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {
   flowDirection: 'FORWARD',
   arrowShape: 'TRIANGLE',
   arrowColor: '',
-  arrows: []
+  arrows: [],
+  showStartArrow: false,
+  circleAnimate: false,
+  circleSize: 1,
+  circleSpeed: 2
 };
 
 // The boundaries of the search area for the pathfinder algorithm
@@ -87,7 +91,10 @@ export const RECTANGLE_DEFAULTS: Required<
   Omit<Rectangle, 'id' | 'from' | 'to' | 'color'>
 > = {
   customColor: '',
-  zOrder: 0
+  zOrder: 0,
+  cornerStyle: 'ROUNDED',
+  borderStyle: 'SOLID',
+  borderColor: ''
 };
 
 export const ZOOM_INCREMENT = 0.05;

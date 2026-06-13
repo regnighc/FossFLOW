@@ -5,6 +5,7 @@ import { useInteractionManager } from 'src/interaction/useInteractionManager';
 import { Grid } from 'src/components/Grid/Grid';
 import { Cursor } from 'src/components/Cursor/Cursor';
 import { Nodes } from 'src/components/SceneLayers/Nodes/Nodes';
+import { SelectionHighlight } from 'src/components/SceneLayers/Nodes/SelectionHighlight';
 import { Rectangles } from 'src/components/SceneLayers/Rectangles/Rectangles';
 import { Connectors } from 'src/components/SceneLayers/Connectors/Connectors';
 import { ConnectorLabels } from 'src/components/SceneLayers/ConnectorLabels/ConnectorLabels';
@@ -104,6 +105,9 @@ export const Renderer = ({ showGrid, backgroundColor }: RendererProps) => {
           height: '100%'
         }}
       />
+      <SceneLayer>
+        <SelectionHighlight />
+      </SceneLayer>
       <SceneLayer>
         <Nodes nodes={items} />
       </SceneLayer>

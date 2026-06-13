@@ -7,5 +7,8 @@ export const rectangleSchema = z.object({
   customColor: z.string().optional(),
   from: coords,
   to: coords,
-  zOrder: z.number().optional()
+  zOrder: z.number().optional(),
+  cornerStyle: z.enum(['ROUNDED', 'SQUARE']).optional(),
+  borderStyle: z.enum(['SOLID', 'DASHED']).optional(),
+  borderColor: z.string().optional()
 });

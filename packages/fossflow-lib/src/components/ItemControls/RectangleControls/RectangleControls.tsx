@@ -6,7 +6,10 @@ import {
   Switch,
   Typography,
   Paper,
-  Tooltip
+  Tooltip,
+  ToggleButtonGroup,
+  ToggleButton,
+  Button
 } from '@mui/material';
 import {
   KeyboardArrowUp as UpIcon,
@@ -94,6 +97,52 @@ export const RectangleControls = ({ id }: Props) => {
               onChange={(color) => updateRectangle(rectangle.id, { color, customColor: '' })}
               activeColor={rectangle.color}
             />
+          )}
+        </Section>
+
+        <Section title="Corner Style">
+          <ToggleButtonGroup
+            value={rectangle.cornerStyle ?? 'ROUNDED'}
+            exclusive
+            size="small"
+            onChange={(_, val) => { if (val) updateRectangle(rectangle.id, { cornerStyle: val }); }}
+          >
+            <ToggleButton value="ROUNDED">Rounded</ToggleButton>
+            <ToggleButton value="SQUARE">Square</ToggleButton>
+          </ToggleButtonGroup>
+        </Section>
+
+        <Section title="Border Style">
+          <ToggleButtonGroup
+            value={rectangle.borderStyle ?? 'SOLID'}
+            exclusive
+            size="small"
+            sx={{ mb: rectangle.borderStyle === 'DASHED' ? 1.5 : 0 }}
+            onChange={(_, val) => { if (val) updateRectangle(rectangle.id, { borderStyle: val }); }}
+          >
+            <ToggleButton value="SOLID">Solid</ToggleButton>
+            <ToggleButton value="DASHED">Dashed</ToggleButton>
+          </ToggleButtonGroup>
+          {rectangle.borderStyle === 'DASHED' && (
+            <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                Border Color (auto = darker shade)
+              </Typography>
+              <CustomColorInput
+                value={rectangle.borderColor || '#000000'}
+                onChange={(color) => updateRectangle(rectangle.id, { borderColor: color })}
+              />
+              {rectangle.borderColor && (
+                <Button
+                  size="small"
+                  variant="text"
+                  sx={{ mt: 0.5, fontSize: '0.7rem', p: '2px 6px' }}
+                  onClick={() => updateRectangle(rectangle.id, { borderColor: '' })}
+                >
+                  Reset to auto
+                </Button>
+              )}
+            </Box>
           )}
         </Section>
 

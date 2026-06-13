@@ -361,19 +361,24 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
             </Select>
           )}
         </Section>
-        <Section>
+        <Section title="Arrows">
           <FormControlLabel
             control={
               <Switch
                 checked={connector.showArrow !== false}
-                onChange={(e) => {
-                  updateConnector(connector.id, {
-                    showArrow: e.target.checked
-                  });
-                }}
+                onChange={(e) => updateConnector(connector.id, { showArrow: e.target.checked })}
               />
             }
             label="Show End Arrow"
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={connector.showStartArrow === true}
+                onChange={(e) => updateConnector(connector.id, { showStartArrow: e.target.checked })}
+              />
+            }
+            label="Show Start Arrow (2-way)"
           />
         </Section>
         <Section title="Additional Arrows">
@@ -467,6 +472,43 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
               updateConnector(connector.id, { arrowColor: color });
             }}
           />
+        </Section>
+        <Section title="Traveling Circle">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={connector.circleAnimate === true}
+                onChange={(e) => updateConnector(connector.id, { circleAnimate: e.target.checked })}
+              />
+            }
+            label="Animate traveling circle"
+          />
+          {connector.circleAnimate === true && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="caption" color="text.secondary">
+                Size: {(connector.circleSize ?? 1).toFixed(1)}x
+              </Typography>
+              <Slider
+                marks
+                step={0.25}
+                min={0.5}
+                max={4}
+                value={connector.circleSize ?? 1}
+                onChange={(_, val) => updateConnector(connector.id, { circleSize: val as number })}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Speed: {(connector.circleSpeed ?? 2).toFixed(1)}s per cycle
+              </Typography>
+              <Slider
+                marks
+                step={0.5}
+                min={0.5}
+                max={10}
+                value={connector.circleSpeed ?? 2}
+                onChange={(_, val) => updateConnector(connector.id, { circleSpeed: val as number })}
+              />
+            </Box>
+          )}
         </Section>
       <Section>
         <Box>
