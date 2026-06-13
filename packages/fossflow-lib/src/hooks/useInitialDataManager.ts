@@ -113,10 +113,10 @@ export const useInitialDataManager = () => {
       prevInitialData.current = initialData;
       model.actions.set(initialData, true);
 
-      const view = getItemByIdOrThrow(
-        initialData.views,
-        initialData.view ?? initialData.views[0].id
-      );
+      const targetViewId = initialData.view ?? initialData.views[0].id;
+      const viewExists = initialData.views.some((v: any) => v.id === targetViewId);
+      const resolvedViewId = viewExists ? targetViewId : initialData.views[0].id;
+      const view = getItemByIdOrThrow(initialData.views, resolvedViewId);
 
       changeView(view.value.id, initialData);
 

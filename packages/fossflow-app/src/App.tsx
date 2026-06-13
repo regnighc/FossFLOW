@@ -174,7 +174,14 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(() => _editorPersist.id);
-  const [currentViewId, setCurrentViewId] = useState<string | null>(() => _editorPersist.viewId);
+  const [currentViewId, setCurrentViewId] = useState<string | null>(() => {
+    const persisted = _editorPersist.viewId;
+    const model = _editorPersist.model;
+    if (!persisted || !model) return persisted;
+    // Validate the persisted view ID still exists in the persisted model
+    const viewExists = (model.views || []).some((v: any) => v.id === persisted);
+    return viewExists ? persisted : ((model.views || [])[0]?.id ?? null);
+  });
   const [fossflowKey, setFossflowKey] = useState(0);
   const [currentModel, setCurrentModel] = useState<DiagramData | null>(() => _editorPersist.model);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(() => _editorPersist.hasUnsaved);
