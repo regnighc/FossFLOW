@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import * as htmlToImage from 'html-to-image';
 import { Isoflow } from 'fossflow';
 import { flattenCollections } from '@isoflow/isopacks/dist/utils';
 import isoflowIsopack from '@isoflow/isopacks/dist/isoflow';
@@ -77,52 +78,28 @@ function applyTheme(theme: 'light' | 'dark') {
 
 async function captureThumbnail(): Promise<string | null> {
   try {
-    const canvas = document.querySelector('.fossflow-container canvas') as HTMLCanvasElement | null;
-    if (!canvas) return null;
-    return new Promise(resolve => {
-      const thumb = document.createElement('canvas');
-      thumb.width = 320;
-      thumb.height = 200;
-      const ctx = thumb.getContext('2d');
-      if (!ctx) { resolve(null); return; }
-      ctx.drawImage(canvas, 0, 0, 320, 200);
-      thumb.toBlob(blob => {
-        if (!blob) { resolve(null); return; }
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.readAsDataURL(blob);
-      }, 'image/jpeg', 0.6);
-    });
+    const el = document.querySelector('.fossflow-container') as HTMLElement | null;
+    if (!el) return null;
+    return await htmlToImage.toJpeg(el, { quality: 0.6, width: 320, height: 200, skipAutoScale: false });
   } catch {
     return null;
   }
 }
 
 async function exportCanvasImage(name: string, backgroundColor?: string) {
-  const canvas = document.querySelector('.fossflow-container canvas') as HTMLCanvasElement | null;
-  if (!canvas) { alert('Could not capture the diagram canvas.'); return; }
-  return new Promise<void>(resolve => {
-    const exportCanvas = document.createElement('canvas');
-    exportCanvas.width = canvas.width;
-    exportCanvas.height = canvas.height;
-    const ctx = exportCanvas.getContext('2d');
-    if (!ctx) { alert('Export failed.'); resolve(); return; }
-    if (backgroundColor) {
-      ctx.fillStyle = backgroundColor;
-      ctx.fillRect(0, 0, exportCanvas.width, exportCanvas.height);
-    }
-    ctx.drawImage(canvas, 0, 0);
-    exportCanvas.toBlob(blob => {
-      if (!blob) { alert('Export failed.'); resolve(); return; }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${name || 'diagram'}-${new Date().toISOString().split('T')[0]}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
-      resolve();
-    }, 'image/png');
-  });
+  const el = document.querySelector('.fossflow-container') as HTMLElement | null;
+  if (!el) { alert('Could not capture the diagram.'); return; }
+  try {
+    const dataUrl = await htmlToImage.toPng(el, {
+      backgroundColor: backgroundColor ?? undefined
+    });
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `${name || 'diagram'}-${new Date().toISOString().split('T')[0]}.png`;
+    a.click();
+  } catch {
+    alert('Export failed.');
+  }
 }
 
 // ---------------------------------------------------------------------------
