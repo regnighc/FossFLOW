@@ -1,0 +1,16 @@
+services:
+  fossflow:
+    image: fossflow-custom
+    pull_policy: never
+    ports:
+      - 33123:80
+    environment:
+      - NODE_ENV=production
+      - ENABLE_SERVER_STORAGE=true
+      - STORAGE_PATH=/data/diagrams
+      - BACKEND_PORT=3001
+    volumes:
+      - fossflow_data:/data
+
+volumes:
+  fossflow_data:

@@ -1,0 +1,104 @@
+.file-menu {
+  position: relative;
+}
+
+.file-menu-trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.file-menu-trigger:hover, .file-menu-trigger.open {
+  background: var(--bg-secondary);
+  border-color: var(--btn-primary-bg);
+}
+
+.file-menu-trigger.unsaved {
+  border-color: #f59e0b;
+}
+
+.unsaved-dot {
+  width: 6px;
+  height: 6px;
+  background: #f59e0b;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.chevron {
+  opacity: 0.6;
+  transition: transform 0.15s;
+}
+
+.file-menu-trigger.open .chevron {
+  transform: rotate(180deg);
+}
+
+.file-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  min-width: 200px;
+  z-index: 9999;
+  overflow: hidden;
+  animation: dropdown-appear 0.12s ease;
+}
+
+@keyframes dropdown-appear {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.file-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+  text-align: left;
+  transition: background 0.1s;
+}
+
+.file-menu-item:hover:not(.disabled) {
+  background: var(--bg-secondary);
+}
+
+.file-menu-item.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.file-menu-icon {
+  font-size: 16px;
+  width: 20px;
+  text-align: center;
+}
+
+.file-menu-label {
+  flex: 1;
+}
+
+.file-menu-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}

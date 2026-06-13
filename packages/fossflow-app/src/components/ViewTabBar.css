@@ -1,0 +1,134 @@
+.view-tab-bar {
+  display: flex;
+  align-items: center;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-color);
+  height: 36px;
+  flex-shrink: 0;
+  overflow: hidden;
+  user-select: none;
+  position: relative;
+  z-index: 100;
+}
+
+.view-tabs-scroll {
+  display: flex;
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+  flex: 1;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.view-tabs-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.view-tab {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 10px 0 12px;
+  border-right: 1px solid var(--border-color);
+  cursor: pointer;
+  min-width: 80px;
+  max-width: 180px;
+  height: 100%;
+  transition: background 0.12s;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.view-tab:hover {
+  background: var(--bg-secondary);
+}
+
+.view-tab.active {
+  background: var(--bg-secondary);
+  border-bottom: 2px solid var(--btn-primary-bg);
+}
+
+.view-tab.active .view-tab-name {
+  color: var(--btn-primary-bg);
+  font-weight: 600;
+}
+
+.view-tab-name {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
+}
+
+.view-tab-input {
+  font-size: 12px;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  border: 1px solid var(--btn-primary-bg);
+  border-radius: 3px;
+  padding: 1px 5px;
+  outline: none;
+  flex: 1;
+  min-width: 60px;
+  max-width: 140px;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.view-tab-close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: transparent;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.1s;
+}
+
+.view-tab:hover .view-tab-close,
+.view-tab.active .view-tab-close {
+  display: flex;
+}
+
+.view-tab-close:hover {
+  background: #fee2e2;
+  color: #ef4444;
+}
+
+[data-theme="dark"] .view-tab-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.view-tab-add {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 12px;
+  height: 100%;
+  background: transparent;
+  border: none;
+  border-left: 1px solid var(--border-color);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.12s;
+  flex-shrink: 0;
+}
+
+.view-tab-add:hover {
+  background: var(--bg-secondary);
+  color: var(--btn-primary-bg);
+}
