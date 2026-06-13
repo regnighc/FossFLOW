@@ -61,25 +61,6 @@ export const Node = memo(({ node, order }: Props) => {
           top: position.y - (PROJECTED_TILE_SIZE.height / 2),
         }}
       >
-        {(modelItem?.name || description) && (
-          <Box>
-            <ExpandableLabel
-              maxWidth={250}
-              expandDirection="BOTTOM"
-              labelHeight={node.labelHeight ?? DEFAULT_LABEL_HEIGHT}
-            >
-              <Stack spacing={1}>
-                {modelItem.name && (
-                  <Typography fontWeight={600}>{modelItem.name}</Typography>
-                )}
-                {modelItem.description &&
-                  modelItem.description !== MARKDOWN_EMPTY_VALUE && (
-                    <RichTextEditor value={modelItem.description} readOnly />
-                  )}
-              </Stack>
-            </ExpandableLabel>
-          </Box>
-        )}
         {iconComponent && (
           <Box
             sx={{
@@ -90,6 +71,25 @@ export const Node = memo(({ node, order }: Props) => {
             }}
           >
             {iconComponent}
+          </Box>
+        )}
+        {(modelItem?.name || description) && (
+          <Box>
+            <ExpandableLabel
+              maxWidth={250}
+              expandDirection="BOTTOM"
+              labelHeight={node.labelHeight ?? DEFAULT_LABEL_HEIGHT}
+            >
+              <Stack spacing={1}>
+                {modelItem.name && (
+                  <Typography fontWeight={600} sx={{ color: 'var(--ff-label-text, rgba(0,0,0,0.87))' }}>{modelItem.name}</Typography>
+                )}
+                {modelItem.description &&
+                  modelItem.description !== MARKDOWN_EMPTY_VALUE && (
+                    <RichTextEditor value={modelItem.description} readOnly />
+                  )}
+              </Stack>
+            </ExpandableLabel>
           </Box>
         )}
       </Box>

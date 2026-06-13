@@ -65,9 +65,10 @@ export const Label = ({
         sx={{
           position: 'absolute',
           display: 'inline-block',
-          bgcolor: 'common.white',
+          bgcolor: 'var(--ff-label-bg, #ffffff)',
           border: '1px solid',
-          borderColor: 'grey.400',
+          borderColor: 'var(--ff-label-border, #bdbdbd)',
+          color: 'var(--ff-label-text, rgba(0,0,0,0.87))',
           borderRadius: 2,
           py: 1,
           px: 1.5,
@@ -76,6 +77,7 @@ export const Label = ({
             expandDirection === 'BOTTOM' ? '-100%' : '-50%'
           })`,
           overflow: 'hidden',
+          zIndex: 10,
           ...sx
         }}
         style={{

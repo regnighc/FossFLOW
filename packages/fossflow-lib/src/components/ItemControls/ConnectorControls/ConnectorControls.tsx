@@ -442,6 +442,32 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
             </Button>
           </Box>
         </Section>
+        <Section title="Arrow Shape">
+          <Select
+            value={connector.arrowShape || 'TRIANGLE'}
+            onChange={(e) => {
+              updateConnector(connector.id, { arrowShape: e.target.value as Connector['arrowShape'] });
+            }}
+            fullWidth
+            size="small"
+            sx={{ mb: 2 }}
+          >
+            <MenuItem value="TRIANGLE">▲ Triangle (filled)</MenuItem>
+            <MenuItem value="OPEN">› Open Chevron</MenuItem>
+            <MenuItem value="CIRCLE">● Circle</MenuItem>
+            <MenuItem value="DIAMOND">◆ Diamond</MenuItem>
+            <MenuItem value="BARB">⟩ Barb</MenuItem>
+          </Select>
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            Arrow Color
+          </Typography>
+          <CustomColorInput
+            value={connector.arrowColor || '#000000'}
+            onChange={(color) => {
+              updateConnector(connector.id, { arrowColor: color });
+            }}
+          />
+        </Section>
       <Section>
         <Box>
           <DeleteButton

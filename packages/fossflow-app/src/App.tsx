@@ -31,13 +31,29 @@ const _editorPersist: {
 } = { model: null, name: 'Untitled Diagram', id: null, viewId: null, hasUnsaved: false };
 
 const defaultColors = [
+  // Vibrant
   { id: 'blue', value: '#0066cc' },
   { id: 'green', value: '#00aa00' },
   { id: 'red', value: '#cc0000' },
   { id: 'orange', value: '#ff9900' },
   { id: 'purple', value: '#9900cc' },
   { id: 'black', value: '#000000' },
-  { id: 'gray', value: '#666666' }
+  { id: 'gray', value: '#666666' },
+  { id: 'teal', value: '#008080' },
+  { id: 'indigo', value: '#4b0082' },
+  { id: 'brown', value: '#8b4513' },
+  { id: 'navy', value: '#001f5b' },
+  { id: 'magenta', value: '#cc0066' },
+  { id: 'cyan', value: '#007acc' },
+  { id: 'olive', value: '#556b2f' },
+  // Pastels
+  { id: 'pastel-blue', value: '#aec6e8' },
+  { id: 'pastel-green', value: '#b8e0b8' },
+  { id: 'pastel-pink', value: '#f4b8c8' },
+  { id: 'pastel-yellow', value: '#fef08a' },
+  { id: 'pastel-purple', value: '#d4b8f0' },
+  { id: 'pastel-orange', value: '#ffd8a8' },
+  { id: 'pastel-teal', value: '#99ddd8' }
 ];
 
 // ---------------------------------------------------------------------------
@@ -482,8 +498,14 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
 
   const switchView = (viewId: string) => {
     if (viewId === currentViewId) return;
+    // Flush pending debounce so diagramData is up-to-date before switching
+    if (modelFlushTimerRef.current) {
+      clearTimeout(modelFlushTimerRef.current);
+      modelFlushTimerRef.current = null;
+      const m = latestModelRef.current;
+      if (m) { setCurrentModel(m); setDiagramData(m); }
+    }
     setCurrentViewId(viewId);
-    // No fossflowKey remount — useInitialDataManager now detects the active-view change
   };
 
   const addView = () => {
@@ -496,6 +518,11 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
       rectangles: [],
       textBoxes: []
     };
+    // Flush any pending debounced model update so latestModelRef is canonical
+    if (modelFlushTimerRef.current) {
+      clearTimeout(modelFlushTimerRef.current);
+      modelFlushTimerRef.current = null;
+    }
     const base = latestModelRef.current || currentModel || diagramData;
     const updatedData = { ...base, views: [...views, newView] } as DiagramData;
     latestModelRef.current = updatedData;
@@ -503,7 +530,8 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
     setCurrentModel(updatedData);
     setCurrentViewId(newView.id);
     setHasUnsavedChanges(true);
-    // No fossflowKey remount — useInitialDataManager now detects view additions
+    // Force Isoflow remount so it reliably initialises the new empty view
+    setFossflowKey(k => k + 1);
   };
 
   const renameView = (viewId: string, newName: string) => {

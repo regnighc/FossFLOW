@@ -4,7 +4,8 @@ import { id, coords } from './common';
 export const rectangleSchema = z.object({
   id,
   color: id.optional(),
-  customColor: z.string().optional(), // For custom RGB colors
+  customColor: z.string().optional(),
   from: coords,
-  to: coords
+  to: coords,
+  zOrder: z.number().optional()
 });

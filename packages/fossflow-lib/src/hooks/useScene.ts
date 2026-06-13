@@ -388,6 +388,34 @@ export const useScene = () => {
     [getState, setState, currentViewId, saveToHistoryBeforeChange]
   );
 
+  const reorderRectangles = useCallback(
+    (orderedIds: string[]) => {
+      if (!currentViewId) return;
+
+      saveToHistoryBeforeChange();
+      const state = getState();
+      const view = getItemByIdOrThrow(state.model.views, currentViewId);
+      const rects = view.value.rectangles ?? [];
+      const reordered = orderedIds
+        .map(id => rects.find((r: Rectangle) => r.id === id))
+        .filter(Boolean) as Rectangle[];
+      const missing = rects.filter((r: Rectangle) => !orderedIds.includes(r.id));
+      const newRects = [...reordered, ...missing];
+
+      const newState = {
+        ...state,
+        model: {
+          ...state.model,
+          views: state.model.views.map((v: any) =>
+            v.id === currentViewId ? { ...v, rectangles: newRects } : v
+          )
+        }
+      };
+      setState(newState);
+    },
+    [getState, setState, currentViewId, saveToHistoryBeforeChange]
+  );
+
   const transaction = useCallback(
     (operations: () => void) => {
       if (transactionInProgress.current) {
@@ -538,6 +566,7 @@ export const useScene = () => {
     createRectangle,
     updateRectangle,
     deleteRectangle,
+    reorderRectangles,
     transaction,
     placeIcon,
     copyObjectsToClipboard,

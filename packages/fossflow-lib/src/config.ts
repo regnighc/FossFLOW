@@ -61,6 +61,8 @@ export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {
   showArrow: true,
   flowAnimate: false,
   flowDirection: 'FORWARD',
+  arrowShape: 'TRIANGLE',
+  arrowColor: '',
   arrows: []
 };
 
@@ -80,7 +82,8 @@ export const TEXTBOX_FONT_WEIGHT = 'bold';
 export const RECTANGLE_DEFAULTS: Required<
   Omit<Rectangle, 'id' | 'from' | 'to' | 'color'>
 > = {
-  customColor: ''
+  customColor: '',
+  zOrder: 0
 };
 
 export const ZOOM_INCREMENT = 0.05;

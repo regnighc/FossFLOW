@@ -94,10 +94,11 @@ const getArrowAtPercent = (
   return { x, y, rotation };
 };
 
-// Unique animation ID per module load to avoid keyframe name collisions
-const FLOW_ANIM_ID = `ffFlow${Math.random().toString(36).slice(2, 7)}`;
+// Unique per-instance ID for SVG animate elements (avoids DOM id collisions)
+let _animCounter = 0;
 
 export const Connector = memo(({ connector: _connector, isSelected, groupIndex = 0, groupTotal = 1, dimmed = false }: Props) => {
+  const animId = useMemo(() => `ffa${++_animCounter}`, []);
   const theme = useTheme();
   const predefinedColor = useColor(_connector.color);
   const { currentView } = useScene();
@@ -229,20 +230,45 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
   }, [connector.arrows, connector.path.tiles, drawOffset]);
 
   const lineType = connector.lineType || 'SINGLE';
-  const arrowPolygon = "17.58,17.01 0,-17.01 -17.58,17.01";
+  const arrowShape = connector.arrowShape || 'TRIANGLE';
+  const arrowFill = connector.arrowColor || '#000000';
 
   const renderArrow = (x: number, y: number, rotation: number, key: string) => (
     <g key={key} transform={`translate(${x}, ${y})`}>
       <g transform={`rotate(${rotation})`}>
-        <polygon
-          fill="black"
-          stroke={theme.palette.common.white}
-          strokeWidth={4}
-          points={arrowPolygon}
-        />
+        {arrowShape === 'TRIANGLE' && (
+          <polygon fill={arrowFill} stroke={theme.palette.common.white} strokeWidth={4} points="17.58,17.01 0,-17.01 -17.58,17.01" />
+        )}
+        {arrowShape === 'OPEN' && (
+          <polyline fill="none" stroke={arrowFill} strokeWidth={connectorWidthPx * 1.2} strokeLinecap="round" strokeLinejoin="round" points="-16,14 0,-16 16,14" />
+        )}
+        {arrowShape === 'CIRCLE' && (
+          <>
+            <circle r={12} fill={theme.palette.common.white} stroke={theme.palette.common.white} strokeWidth={4} />
+            <circle r={12} fill={arrowFill} />
+          </>
+        )}
+        {arrowShape === 'DIAMOND' && (
+          <polygon fill={arrowFill} stroke={theme.palette.common.white} strokeWidth={4} points="0,-18 14,0 0,18 -14,0" />
+        )}
+        {arrowShape === 'BARB' && (
+          <polygon fill={arrowFill} stroke={theme.palette.common.white} strokeWidth={3} points="18,16 0,-18 -18,16 0,4" />
+        )}
       </g>
     </g>
   );
+
+  // SVG animate element for smooth GPU-accelerated dash flow (avoids CSS keyframe injection churn)
+  const svgAnimate = (isAnimated && strokeDashArray !== 'none') ? (
+    <animate
+      attributeName="stroke-dashoffset"
+      from="0"
+      to={String(animTo)}
+      dur="0.8s"
+      repeatCount="indefinite"
+      calcMode="linear"
+    />
+  ) : null;
 
   return (
     <Box style={{ ...css, opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.2s ease-in-out' }}>
@@ -252,16 +278,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
         }}
         viewboxSize={pxSize}
       >
-        {/* CSS keyframe for flow animation — injected whenever any animation is active */}
-        {isAnimated && strokeDashArray !== 'none' && (
-          <defs>
-            <style>{`
-              @keyframes ${FLOW_ANIM_ID} { to { stroke-dashoffset: ${animTo}px; } }
-              .ff-flow-line { animation: ${FLOW_ANIM_ID} 0.7s linear infinite; }
-            `}</style>
-          </defs>
-        )}
-
         {lineType === 'SINGLE' ? (
           <>
             <polyline
@@ -275,7 +291,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
-              className={isAnimated && strokeDashArray !== 'none' ? 'ff-flow-line' : undefined}
               points={pathString}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -283,7 +298,9 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               strokeLinejoin="round"
               strokeDasharray={strokeDashArray}
               fill="none"
-            />
+            >
+              {svgAnimate}
+            </polyline>
           </>
         ) : offsetPaths ? (
           <>
@@ -298,7 +315,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
-              className={isAnimated && strokeDashArray !== 'none' ? 'ff-flow-line' : undefined}
               points={offsetPaths.path1}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -306,7 +322,9 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               strokeLinejoin="round"
               strokeDasharray={strokeDashArray}
               fill="none"
-            />
+            >
+              {svgAnimate}
+            </polyline>
             <polyline
               points={offsetPaths.path2}
               stroke={theme.palette.common.white}
@@ -318,7 +336,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
-              className={isAnimated && strokeDashArray !== 'none' ? 'ff-flow-line' : undefined}
               points={offsetPaths.path2}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -326,7 +343,9 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               strokeLinejoin="round"
               strokeDasharray={strokeDashArray}
               fill="none"
-            />
+            >
+              {svgAnimate}
+            </polyline>
           </>
         ) : null}
 
