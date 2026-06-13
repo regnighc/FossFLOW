@@ -96,13 +96,13 @@ export const NodeSettings = ({
         />
       </Section>
       {modelItem.name && (
-        <Section title="Label height">
+        <Section title="Label position (negative = below node)">
           <Slider
             marks
             step={20}
-            min={60}
+            min={-200}
             max={280}
-            value={node.labelHeight}
+            value={node.labelHeight ?? 80}
             onChange={(e, newHeight) => {
               const labelHeight = newHeight as number;
               onViewItemUpdated({ labelHeight });

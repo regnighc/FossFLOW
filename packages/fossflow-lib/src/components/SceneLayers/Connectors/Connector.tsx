@@ -22,9 +22,6 @@ interface Props {
   dimmed?: boolean;
 }
 
-/**
- * Calculate the perpendicular unit vector at a point along a tile path.
- */
 const getPerpendicularAt = (
   tiles: { x: number; y: number }[],
   i: number
@@ -51,9 +48,6 @@ const getPerpendicularAt = (
   return { dx: -dirY / len, dy: dirX / len };
 };
 
-/**
- * Build a polyline points string from tiles, applying a perpendicular pixel offset.
- */
 const buildOffsetPolyline = (
   tiles: { x: number; y: number }[],
   drawOffset: { x: number; y: number },
@@ -69,6 +63,40 @@ const buildOffsetPolyline = (
   return points.join(' ');
 };
 
+/** Compute arrow position and rotation at a percentage (0–100) along the tile path. */
+const getArrowAtPercent = (
+  tiles: { x: number; y: number }[],
+  percent: number,
+  drawOffset: { x: number; y: number }
+): { x: number; y: number; rotation: number } | null => {
+  if (tiles.length < 2) return null;
+  const totalSegments = tiles.length - 1;
+  const pos = (percent / 100) * totalSegments;
+  const idx = Math.min(Math.floor(pos), totalSegments - 1);
+  const frac = pos - idx;
+  const t1 = tiles[idx];
+  const t2 = tiles[idx + 1];
+
+  const x = (t1.x + (t2.x - t1.x) * frac) * UNPROJECTED_TILE_SIZE + drawOffset.x;
+  const y = (t1.y + (t2.y - t1.y) * frac) * UNPROJECTED_TILE_SIZE + drawOffset.y;
+
+  const dx = t2.x - t1.x;
+  const dy = t2.y - t1.y;
+  let rotation = 0;
+  if (dx > 0) {
+    rotation = dy > 0 ? 135 : dy < 0 ? 45 : 90;
+  } else if (dx < 0) {
+    rotation = dy > 0 ? -135 : dy < 0 ? -45 : -90;
+  } else {
+    rotation = dy > 0 ? 180 : dy < 0 ? 0 : -90;
+  }
+
+  return { x, y, rotation };
+};
+
+// Unique animation ID per module load to avoid keyframe name collisions
+const FLOW_ANIM_ID = `ffFlow${Math.random().toString(36).slice(2, 7)}`;
+
 export const Connector = memo(({ connector: _connector, isSelected, groupIndex = 0, groupTotal = 1, dimmed = false }: Props) => {
   const theme = useTheme();
   const predefinedColor = useColor(_connector.color);
@@ -79,7 +107,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     return null;
   }
 
-  // Use custom color if provided, otherwise use predefined color
   const color = connector.customColor
     ? { value: connector.customColor }
     : predefinedColor;
@@ -103,7 +130,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     return (UNPROJECTED_TILE_SIZE / 100) * connector.width;
   }, [connector.width]);
 
-  // Pixel offset to spread parallel connectors within one tile
   const groupOffsetPx = useMemo(() => {
     return getGroupOffset(groupIndex, groupTotal, UNPROJECTED_TILE_SIZE);
   }, [groupIndex, groupTotal]);
@@ -119,7 +145,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     }, '');
   }, [connector.path.tiles, drawOffset, groupTotal, groupOffsetPx]);
 
-  // Create offset paths for double lines
   const offsetPaths = useMemo(() => {
     if (!connector.lineType || connector.lineType === 'SINGLE') return null;
 
@@ -129,14 +154,12 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     const doubleOffset = connectorWidthPx * 3;
 
     if (groupTotal > 1) {
-      // For grouped double lines: apply group offset + double-line offset together
       return {
         path1: buildOffsetPolyline(tiles, drawOffset, groupOffsetPx + doubleOffset),
         path2: buildOffsetPolyline(tiles, drawOffset, groupOffsetPx - doubleOffset)
       };
     }
 
-    // Non-grouped double lines: original behavior
     return {
       path1: buildOffsetPolyline(tiles, drawOffset, doubleOffset),
       path2: buildOffsetPolyline(tiles, drawOffset, -doubleOffset)
@@ -173,31 +196,66 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
     return getConnectorDirectionIcon(connector.path.tiles);
   }, [connector.path.tiles]);
 
+  const isFlow = connector.style === 'FLOW';
+  const dashLen = connectorWidthPx * 4;
+  const gapLen = connectorWidthPx * 2;
+
   const strokeDashArray = useMemo(() => {
     switch (connector.style) {
       case 'DASHED':
         return `${connectorWidthPx * 2}, ${connectorWidthPx * 2}`;
       case 'DOTTED':
         return `0, ${connectorWidthPx * 1.8}`;
+      case 'FLOW':
+        return `${dashLen}, ${gapLen}`;
       case 'SOLID':
       default:
         return 'none';
     }
-  }, [connector.style, connectorWidthPx]);
+  }, [connector.style, connectorWidthPx, dashLen, gapLen]);
+
+  // Additional arrows at custom positions along the path
+  const additionalArrows = useMemo(() => {
+    if (!connector.arrows || connector.arrows.length === 0) return [];
+    return connector.arrows
+      .map(a => ({ id: a.id, pos: getArrowAtPercent(connector.path.tiles, a.position, drawOffset) }))
+      .filter(a => a.pos !== null) as { id: string; pos: { x: number; y: number; rotation: number } }[];
+  }, [connector.arrows, connector.path.tiles, drawOffset]);
 
   const lineType = connector.lineType || 'SINGLE';
+  const arrowPolygon = "17.58,17.01 0,-17.01 -17.58,17.01";
+
+  const renderArrow = (x: number, y: number, rotation: number, key: string) => (
+    <g key={key} transform={`translate(${x}, ${y})`}>
+      <g transform={`rotate(${rotation})`}>
+        <polygon
+          fill="black"
+          stroke={theme.palette.common.white}
+          strokeWidth={4}
+          points={arrowPolygon}
+        />
+      </g>
+    </g>
+  );
 
   return (
     <Box style={{ ...css, opacity: dimmed ? 0.25 : 1, transition: 'opacity 0.2s ease-in-out' }}>
       <Svg
         style={{
-          // TODO: The original x coordinates of each tile seems to be calculated wrongly.
-          // They are mirrored along the x-axis.  The hack below fixes this, but we should
-          // try to fix this issue at the root of the problem (might have further implications).
           transform: 'scale(-1, 1)'
         }}
         viewboxSize={pxSize}
       >
+        {/* Inject CSS keyframe for FLOW animation once per connector SVG */}
+        {isFlow && (
+          <defs>
+            <style>{`
+              @keyframes ${FLOW_ANIM_ID} { to { stroke-dashoffset: ${dashLen + gapLen}px; } }
+              .ff-flow-line { animation: ${FLOW_ANIM_ID} 0.7s linear infinite; }
+            `}</style>
+          </defs>
+        )}
+
         {lineType === 'SINGLE' ? (
           <>
             <polyline
@@ -211,6 +269,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
+              className={isFlow ? 'ff-flow-line' : undefined}
               points={pathString}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -222,7 +281,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
           </>
         ) : offsetPaths ? (
           <>
-            {/* First line of double */}
             <polyline
               points={offsetPaths.path1}
               stroke={theme.palette.common.white}
@@ -234,6 +292,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
+              className={isFlow ? 'ff-flow-line' : undefined}
               points={offsetPaths.path1}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -242,7 +301,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               strokeDasharray={strokeDashArray}
               fill="none"
             />
-            {/* Second line of double */}
             <polyline
               points={offsetPaths.path2}
               stroke={theme.palette.common.white}
@@ -254,6 +312,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
+              className={isFlow ? 'ff-flow-line' : undefined}
               points={offsetPaths.path2}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -273,7 +332,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
           const x = midTile.x * UNPROJECTED_TILE_SIZE + drawOffset.x + dx * groupOffsetPx;
           const y = midTile.y * UNPROJECTED_TILE_SIZE + drawOffset.y + dy * groupOffsetPx;
 
-          // Calculate rotation based on line direction at middle point
           let rotation = 0;
           if (midIndex > 0 && midIndex < connector.path.tiles.length - 1) {
             const prevTile = connector.path.tiles[midIndex - 1];
@@ -283,26 +341,19 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
             rotation = Math.atan2(rdy, rdx) * (180 / Math.PI);
           }
 
-          // Increased size to encompass both lines with the spacing
           const circleRadiusX = connectorWidthPx * 5;
           const circleRadiusY = connectorWidthPx * 4;
 
           return (
             <g transform={`translate(${x}, ${y}) rotate(${rotation})`}>
               <ellipse
-                cx={0}
-                cy={0}
-                rx={circleRadiusX}
-                ry={circleRadiusY}
+                cx={0} cy={0} rx={circleRadiusX} ry={circleRadiusY}
                 fill="none"
                 stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
                 strokeWidth={connectorWidthPx * 0.8}
               />
               <ellipse
-                cx={0}
-                cy={0}
-                rx={circleRadiusX}
-                ry={circleRadiusY}
+                cx={0} cy={0} rx={circleRadiusX} ry={circleRadiusY}
                 fill="none"
                 stroke={theme.palette.common.white}
                 strokeWidth={connectorWidthPx * 1.2}
@@ -315,35 +366,18 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
         {anchorPositions.map((anchor) => {
           return (
             <g key={anchor.id}>
-              <Circle
-                tile={anchor}
-                radius={18}
-                fill={theme.palette.common.white}
-                fillOpacity={0.7}
-              />
-              <Circle
-                tile={anchor}
-                radius={12}
-                stroke={theme.palette.common.black}
-                fill={theme.palette.common.white}
-                strokeWidth={6}
-              />
+              <Circle tile={anchor} radius={18} fill={theme.palette.common.white} fillOpacity={0.7} />
+              <Circle tile={anchor} radius={12} stroke={theme.palette.common.black} fill={theme.palette.common.white} strokeWidth={6} />
             </g>
           );
         })}
 
-        {directionIcon && connector.showArrow !== false && (
-          <g transform={`translate(${directionIcon.x}, ${directionIcon.y})`}>
-            <g transform={`rotate(${directionIcon.rotation})`}>
-              <polygon
-                fill="black"
-                stroke={theme.palette.common.white}
-                strokeWidth={4}
-                points="17.58,17.01 0,-17.01 -17.58,17.01"
-              />
-            </g>
-          </g>
-        )}
+        {/* Primary direction arrow at the end */}
+        {directionIcon && connector.showArrow !== false &&
+          renderArrow(directionIcon.x, directionIcon.y, directionIcon.rotation ?? 0, 'dir')}
+
+        {/* User-defined additional arrows at arbitrary positions */}
+        {additionalArrows.map(a => renderArrow(a.pos.x, a.pos.y, a.pos.rotation, a.id))}
       </Svg>
     </Box>
   );

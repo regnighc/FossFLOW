@@ -343,8 +343,74 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
                 }}
               />
             }
-            label="Show Arrow"
+            label="Show End Arrow"
           />
+        </Section>
+        <Section title="Additional Arrows">
+          <Box sx={{ mb: 1 }}>
+            {(connector.arrows || []).map((arrow, idx) => (
+              <Box
+                key={arrow.id}
+                sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}
+              >
+                <Typography variant="caption" sx={{ minWidth: 60 }}>
+                  Arrow {idx + 1}
+                </Typography>
+                <Slider
+                  size="small"
+                  min={0}
+                  max={100}
+                  step={5}
+                  value={arrow.position}
+                  onChange={(_, val) => {
+                    const updated = (connector.arrows || []).map(a =>
+                      a.id === arrow.id ? { ...a, position: val as number } : a
+                    );
+                    updateConnector(connector.id, { arrows: updated });
+                  }}
+                  sx={{ flex: 1 }}
+                />
+                <TextField
+                  type="number"
+                  value={arrow.position}
+                  onChange={(e) => {
+                    const val = Math.max(0, Math.min(100, parseInt(e.target.value) || 0));
+                    const updated = (connector.arrows || []).map(a =>
+                      a.id === arrow.id ? { ...a, position: val } : a
+                    );
+                    updateConnector(connector.id, { arrows: updated });
+                  }}
+                  inputProps={{ min: 0, max: 100, style: { width: 42 } }}
+                  size="small"
+                  sx={{ width: 64 }}
+                />
+                <MUIIconButton
+                  size="small"
+                  color="error"
+                  onClick={() => {
+                    const updated = (connector.arrows || []).filter(a => a.id !== arrow.id);
+                    updateConnector(connector.id, { arrows: updated });
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </MUIIconButton>
+              </Box>
+            ))}
+            <Button
+              startIcon={<AddIcon />}
+              size="small"
+              variant="outlined"
+              disabled={(connector.arrows || []).length >= 10}
+              onClick={() => {
+                const newArrow = { id: `arr-${Date.now()}`, position: 50 };
+                updateConnector(connector.id, {
+                  arrows: [...(connector.arrows || []), newArrow]
+                });
+              }}
+            >
+              Add Arrow
+            </Button>
+          </Box>
         </Section>
       <Section>
         <Box>

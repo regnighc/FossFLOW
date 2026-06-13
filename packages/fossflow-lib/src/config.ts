@@ -58,7 +58,8 @@ export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {
   anchors: [],
   style: 'SOLID',
   lineType: 'SINGLE',
-  showArrow: true
+  showArrow: true,
+  arrows: []
 };
 
 // The boundaries of the search area for the pathfinder algorithm

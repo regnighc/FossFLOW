@@ -20,6 +20,16 @@ import './App.css';
 
 const coreIcons = flattenCollections([isoflowIsopack]);
 
+// Module-level singleton that survives React route unmounts so navigating
+// to DrawingsPage / AdminPage and back restores the in-progress diagram.
+const _editorPersist: {
+  model: DiagramData | null;
+  name: string;
+  id: string | null;
+  viewId: string | null;
+  hasUnsaved: boolean;
+} = { model: null, name: 'Untitled Diagram', id: null, viewId: null, hasUnsaved: false };
+
 const defaultColors = [
   { id: 'blue', value: '#0066cc' },
   { id: 'green', value: '#00aa00' },
@@ -158,16 +168,37 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
 
   const isReadonlyUrl = !!readonlyDiagramId;
 
-  const [diagramName, setDiagramName] = useState('Untitled Diagram');
+  const [diagramName, setDiagramName] = useState(() => _editorPersist.name);
   const [editingName, setEditingName] = useState(false);
   const [nameInputValue, setNameInputValue] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
 
-  const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(null);
-  const [currentViewId, setCurrentViewId] = useState<string | null>(null);
+  const [currentDiagramId, setCurrentDiagramId] = useState<string | null>(() => _editorPersist.id);
+  const [currentViewId, setCurrentViewId] = useState<string | null>(() => _editorPersist.viewId);
   const [fossflowKey, setFossflowKey] = useState(0);
-  const [currentModel, setCurrentModel] = useState<DiagramData | null>(null);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [currentModel, setCurrentModel] = useState<DiagramData | null>(() => _editorPersist.model);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(() => _editorPersist.hasUnsaved);
+
+  // Stable refs so the unmount cleanup always has the latest values
+  const diagramNameRef = useRef(diagramName);
+  const currentDiagramIdRef = useRef(currentDiagramId);
+  const currentViewIdRef = useRef(currentViewId);
+  const hasUnsavedRef = useRef(hasUnsavedChanges);
+  useEffect(() => { diagramNameRef.current = diagramName; }, [diagramName]);
+  useEffect(() => { currentDiagramIdRef.current = currentDiagramId; }, [currentDiagramId]);
+  useEffect(() => { currentViewIdRef.current = currentViewId; }, [currentViewId]);
+  useEffect(() => { hasUnsavedRef.current = hasUnsavedChanges; }, [hasUnsavedChanges]);
+
+  // On unmount, save editor state so navigating back restores the diagram
+  useEffect(() => {
+    return () => {
+      _editorPersist.model = latestModelRef.current;
+      _editorPersist.name = diagramNameRef.current;
+      _editorPersist.id = currentDiagramIdRef.current;
+      _editorPersist.viewId = currentViewIdRef.current;
+      _editorPersist.hasUnsaved = hasUnsavedRef.current;
+    };
+  }, []);
   const [quota, setQuota] = useState<{ used: number; total: number } | null>(null);
 
   // Save-to-account dialog
@@ -185,17 +216,20 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   const [pwSuccess, setPwSuccess] = useState('');
   const [pwSaving, setPwSaving] = useState(false);
 
-  const [diagramData, setDiagramData] = useState<DiagramData>(() => ({
-    title: 'Untitled Diagram',
-    icons: coreIcons,
-    colors: defaultColors,
-    items: [],
-    views: [],
-    fitToScreen: true
-  }));
+  const [diagramData, setDiagramData] = useState<DiagramData>(() =>
+    _editorPersist.model ?? {
+      title: 'Untitled Diagram',
+      icons: coreIcons,
+      colors: defaultColors,
+      items: [],
+      views: [],
+      fitToScreen: true
+    }
+  );
 
-  // Refs for debounced model updates — avoids React re-renders on every pan frame
-  const latestModelRef = useRef<DiagramData | null>(null);
+  // Refs for debounced model updates — avoids React re-renders on every pan frame.
+  // Initialised from persisted state so navigation-restore works immediately.
+  const latestModelRef = useRef<DiagramData | null>(_editorPersist.model);
   const modelFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load quota info
@@ -433,8 +467,11 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
     setFossflowKey(k => k + 1);
   };
 
-  // View management
-  const getActiveViews = () => (currentModel?.views || diagramData.views || []) as Array<{ id: string; name: string; [k: string]: any }>;
+  // View management — always use latestModelRef so debounced state is never stale
+  const getActiveViews = () => {
+    const src = latestModelRef.current || currentModel || diagramData;
+    return (src.views || []) as Array<{ id: string; name: string; [k: string]: any }>;
+  };
 
   const switchView = (viewId: string) => {
     if (viewId === currentViewId) return;
@@ -452,9 +489,11 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
       rectangles: [],
       textBoxes: []
     };
-    const updatedData = { ...(currentModel || diagramData), views: [...views, newView] };
-    setDiagramData(updatedData as DiagramData);
-    setCurrentModel(updatedData as DiagramData);
+    const base = latestModelRef.current || currentModel || diagramData;
+    const updatedData = { ...base, views: [...views, newView] } as DiagramData;
+    latestModelRef.current = updatedData;
+    setDiagramData(updatedData);
+    setCurrentModel(updatedData);
     setCurrentViewId(newView.id);
     setHasUnsavedChanges(true);
     setFossflowKey(k => k + 1);
@@ -462,11 +501,12 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
 
   const renameView = (viewId: string, newName: string) => {
     const views = getActiveViews().map(v => v.id === viewId ? { ...v, name: newName } : v);
-    const updatedData = { ...(currentModel || diagramData), views };
-    setDiagramData(updatedData as DiagramData);
-    setCurrentModel(updatedData as DiagramData);
+    const base = latestModelRef.current || currentModel || diagramData;
+    const updatedData = { ...base, views } as DiagramData;
+    latestModelRef.current = updatedData;
+    setDiagramData(updatedData);
+    setCurrentModel(updatedData);
     setHasUnsavedChanges(true);
-    // No remount needed — update will reflect on next key change; force it for the name
     setFossflowKey(k => k + 1);
   };
 
@@ -475,9 +515,11 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
     if (views.length <= 1) return;
     if (!window.confirm(`Delete "${views.find(v => v.id === viewId)?.name ?? 'this view'}"? Items placed only in this view will remain in the diagram.`)) return;
     const remaining = views.filter(v => v.id !== viewId);
-    const updatedData = { ...(currentModel || diagramData), views: remaining };
-    setDiagramData(updatedData as DiagramData);
-    setCurrentModel(updatedData as DiagramData);
+    const base = latestModelRef.current || currentModel || diagramData;
+    const updatedData = { ...base, views: remaining } as DiagramData;
+    latestModelRef.current = updatedData;
+    setDiagramData(updatedData);
+    setCurrentModel(updatedData);
     const newViewId = viewId === currentViewId ? remaining[0].id : currentViewId;
     setCurrentViewId(newViewId);
     setHasUnsavedChanges(true);

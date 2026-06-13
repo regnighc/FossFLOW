@@ -24,6 +24,10 @@ export const Label = ({
 }: Props) => {
   const contentRef = useRef<HTMLDivElement>(null);
 
+  const absHeight = Math.abs(labelHeight);
+  // Negative labelHeight → label sits BELOW anchor; dotted line goes down from top:0
+  const lineTop = labelHeight < 0 ? 0 : -absHeight;
+
   return (
     <Box
       sx={{
@@ -31,14 +35,14 @@ export const Label = ({
         width: maxWidth
       }}
     >
-      {labelHeight > 0 && showLine && (
+      {absHeight > 0 && showLine && (
         <Box
           component="svg"
-          viewBox={`0 0 ${CONNECTOR_DOT_SIZE} ${labelHeight}`}
+          viewBox={`0 0 ${CONNECTOR_DOT_SIZE} ${absHeight}`}
           width={CONNECTOR_DOT_SIZE}
           sx={{
             position: 'absolute',
-            top: -labelHeight,
+            top: lineTop,
             left: -CONNECTOR_DOT_SIZE / 2,
             pointerEvents: 'none'
           }}
@@ -47,7 +51,7 @@ export const Label = ({
             x1={CONNECTOR_DOT_SIZE / 2}
             y1={0}
             x2={CONNECTOR_DOT_SIZE / 2}
-            y2={labelHeight}
+            y2={absHeight}
             strokeDasharray={`0, ${CONNECTOR_DOT_SIZE * 2}`}
             stroke="black"
             strokeWidth={CONNECTOR_DOT_SIZE}

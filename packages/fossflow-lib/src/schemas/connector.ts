@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { coords, id, constrainedStrings } from './common';
 
-export const connectorStyleOptions = ['SOLID', 'DOTTED', 'DASHED'] as const;
+export const connectorStyleOptions = ['SOLID', 'DOTTED', 'DASHED', 'FLOW'] as const;
 export const connectorLineTypeOptions = ['SINGLE', 'DOUBLE', 'DOUBLE_WITH_CIRCLE'] as const;
 
 export const connectorLabelSchema = z.object({
@@ -41,5 +41,7 @@ export const connectorSchema = z.object({
   style: z.enum(connectorStyleOptions).optional(),
   lineType: z.enum(connectorLineTypeOptions).optional(),
   showArrow: z.boolean().optional(),
+  // Additional arrows at arbitrary positions along the connector (0–100%)
+  arrows: z.array(z.object({ id, position: z.number().min(0).max(100) })).max(20).optional(),
   anchors: z.array(anchorSchema)
 });
