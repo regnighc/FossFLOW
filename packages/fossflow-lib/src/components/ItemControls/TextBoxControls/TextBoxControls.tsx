@@ -8,7 +8,11 @@ import {
   Slider,
   IconButton as MUIIconButton,
   FormControlLabel,
-  Switch
+  Switch,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import {
   TextRotationNone as TextRotationNoneIcon,
@@ -101,6 +105,28 @@ export const TextBoxControls = ({ id }: Props) => {
               />
             </ToggleButton>
           </ToggleButtonGroup>
+        </Section>
+        <Section title="Font">
+          <FormControl fullWidth size="small">
+            <InputLabel>Font Family</InputLabel>
+            <Select
+              label="Font Family"
+              value={textBox.fontFamily || ''}
+              onChange={(e) => updateTextBox(textBox.id, { fontFamily: e.target.value || undefined })}
+            >
+              <MenuItem value=""><em>Default</em></MenuItem>
+              <MenuItem value="Inter" sx={{ fontFamily: 'Inter, sans-serif' }}>Inter</MenuItem>
+              <MenuItem value="Roboto" sx={{ fontFamily: 'Roboto, sans-serif' }}>Roboto</MenuItem>
+              <MenuItem value="Arial" sx={{ fontFamily: 'Arial, sans-serif' }}>Arial</MenuItem>
+              <MenuItem value="Georgia" sx={{ fontFamily: 'Georgia, serif' }}>Georgia</MenuItem>
+              <MenuItem value="'Courier New', monospace" sx={{ fontFamily: "'Courier New', monospace" }}>Courier New</MenuItem>
+              <MenuItem value="'Times New Roman', serif" sx={{ fontFamily: "'Times New Roman', serif" }}>Times New Roman</MenuItem>
+              <MenuItem value="Verdana, sans-serif" sx={{ fontFamily: 'Verdana, sans-serif' }}>Verdana</MenuItem>
+              <MenuItem value="'Comic Sans MS', cursive" sx={{ fontFamily: "'Comic Sans MS', cursive" }}>Comic Sans MS</MenuItem>
+              <MenuItem value="Impact, sans-serif" sx={{ fontFamily: 'Impact, sans-serif' }}>Impact</MenuItem>
+              <MenuItem value="'Trebuchet MS', sans-serif" sx={{ fontFamily: "'Trebuchet MS', sans-serif" }}>Trebuchet MS</MenuItem>
+            </Select>
+          </FormControl>
         </Section>
         <Section title="Text color">
           <FormControlLabel

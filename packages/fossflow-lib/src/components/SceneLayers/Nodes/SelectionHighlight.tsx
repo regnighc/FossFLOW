@@ -6,7 +6,7 @@ import { useIsoProjection } from 'src/hooks/useIsoProjection';
 import { Svg } from 'src/components/Svg/Svg';
 
 const TileHighlight = memo(({ tile }: { tile: Coords }) => {
-  const to = useMemo(() => ({ x: tile.x + 1, y: tile.y + 1 }), [tile.x, tile.y]);
+  const to = useMemo(() => ({ x: tile.x, y: tile.y }), [tile.x, tile.y]);
   const { css, pxSize } = useIsoProjection({ from: tile, to });
 
   return (

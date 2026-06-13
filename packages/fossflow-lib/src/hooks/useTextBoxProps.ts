@@ -13,11 +13,11 @@ export const useTextBoxProps = (textBox: TextBox) => {
     return {
       fontSize:
         UNPROJECTED_TILE_SIZE * (textBox.fontSize ?? TEXTBOX_DEFAULTS.fontSize),
-      fontFamily: DEFAULT_FONT_FAMILY,
+      fontFamily: textBox.fontFamily || DEFAULT_FONT_FAMILY,
       fontWeight: TEXTBOX_FONT_WEIGHT,
       ...(textBox.color ? { color: textBox.color } : {})
     };
-  }, [textBox.fontSize, textBox.color]);
+  }, [textBox.fontSize, textBox.color, textBox.fontFamily]);
 
   const paddingX = useMemo(() => {
     return UNPROJECTED_TILE_SIZE * TEXTBOX_PADDING;

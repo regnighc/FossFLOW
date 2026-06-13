@@ -6,6 +6,7 @@ import isoflowIsopack from '@isoflow/isopacks/dist/isoflow';
 import { useTranslation } from 'react-i18next';
 import { DiagramData } from './diagramUtils';
 import { useIconPackManager } from './services/iconPackManager';
+import svgPack1 from './services/svgPack1';
 import { allLocales } from 'fossflow';
 import { BrowserRouter, Route, Routes, useParams, useNavigate, useSearchParams, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -19,7 +20,7 @@ import { ViewTabBar } from './components/ViewTabBar';
 import ChangeLanguage from './components/ChangeLanguage';
 import './App.css';
 
-const coreIcons = flattenCollections([isoflowIsopack]);
+const coreIcons = flattenCollections([isoflowIsopack, svgPack1 as any]);
 
 // Module-level singleton that survives React route unmounts so navigating
 // to DrawingsPage / AdminPage and back restores the in-progress diagram.

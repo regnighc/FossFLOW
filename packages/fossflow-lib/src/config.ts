@@ -81,7 +81,8 @@ export const TEXTBOX_DEFAULTS: Required<Omit<TextBox, 'id' | 'tile'>> = {
   orientation: 'X',
   fontSize: 0.6,
   content: 'Text',
-  color: ''
+  color: '',
+  fontFamily: ''
 };
 
 export const TEXTBOX_PADDING = 0.2;
@@ -94,7 +95,8 @@ export const RECTANGLE_DEFAULTS: Required<
   zOrder: 0,
   cornerStyle: 'ROUNDED',
   borderStyle: 'SOLID',
-  borderColor: ''
+  borderColor: '',
+  borderWidth: 2
 };
 
 export const ZOOM_INCREMENT = 0.05;

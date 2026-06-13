@@ -10,5 +10,6 @@ export const rectangleSchema = z.object({
   zOrder: z.number().optional(),
   cornerStyle: z.enum(['ROUNDED', 'SQUARE']).optional(),
   borderStyle: z.enum(['SOLID', 'DASHED']).optional(),
-  borderColor: z.string().optional()
+  borderColor: z.string().optional(),
+  borderWidth: z.number().optional()
 });

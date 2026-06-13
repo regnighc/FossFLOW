@@ -13,5 +13,6 @@ export const textBoxSchema = z.object({
       z.literal(ProjectionOrientationEnum.Y)
     ])
     .optional(),
-  color: z.string().optional()
+  color: z.string().optional(),
+  fontFamily: z.string().optional()
 });

@@ -1,4 +1,4 @@
-import domtoimage from 'dom-to-image-more';
+import domtoimage from 'dom-to-image';
 import FileSaver from 'file-saver';
 import { Model, Size } from '../types';
 import { icons as availableIcons } from '../examples/initialData';

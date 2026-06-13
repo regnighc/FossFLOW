@@ -9,7 +9,8 @@ import {
   Tooltip,
   ToggleButtonGroup,
   ToggleButton,
-  Button
+  Button,
+  Slider
 } from '@mui/material';
 import {
   KeyboardArrowUp as UpIcon,
@@ -125,6 +126,19 @@ export const RectangleControls = ({ id }: Props) => {
           </ToggleButtonGroup>
           {rectangle.borderStyle === 'DASHED' && (
             <Box>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                Border Thickness
+              </Typography>
+              <Slider
+                marks
+                step={1}
+                min={1}
+                max={8}
+                value={rectangle.borderWidth ?? 2}
+                valueLabelDisplay="auto"
+                onChange={(_, val) => updateRectangle(rectangle.id, { borderWidth: val as number })}
+                sx={{ mb: 1.5 }}
+              />
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
                 Border Color (auto = darker shade)
               </Typography>

@@ -7,7 +7,7 @@ import { useColor } from 'src/hooks/useColor';
 type Props = ReturnType<typeof useScene>['rectangles'][0];
 
 export const Rectangle = memo(({
-  from, to, color: colorId, customColor, cornerStyle, borderStyle, borderColor
+  from, to, color: colorId, customColor, cornerStyle, borderStyle, borderColor, borderWidth
 }: Props) => {
   const predefinedColor = useColor(colorId);
   const color = customColor ? { value: customColor } : predefinedColor;
@@ -16,6 +16,7 @@ export const Rectangle = memo(({
 
   const cornerRadius = cornerStyle === 'SQUARE' ? 0 : 22;
   const isDashed = borderStyle === 'DASHED';
+  const strokeWidth = isDashed ? (borderWidth ?? 2) : 1;
   const strokeColor = isDashed
     ? (borderColor || getColorVariant(color.value, 'dark', { grade: 3 }))
     : getColorVariant(color.value, 'dark', { grade: 2 });
@@ -28,8 +29,8 @@ export const Rectangle = memo(({
       cornerRadius={cornerRadius}
       stroke={{
         color: strokeColor,
-        width: isDashed ? 2 : 1,
-        dashArray: isDashed ? '10,5' : undefined
+        width: strokeWidth,
+        dashArray: isDashed ? `${strokeWidth * 5},${strokeWidth * 2.5}` : undefined
       }}
     />
   );

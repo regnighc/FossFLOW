@@ -1,4 +1,4 @@
-import React, { useMemo, memo, useRef } from 'react';
+import React, { useMemo, memo } from 'react';
 import { useTheme, Box } from '@mui/material';
 import { UNPROJECTED_TILE_SIZE } from 'src/config';
 import {
@@ -93,9 +93,6 @@ const getArrowAtPercent = (
   return { x, y, rotation };
 };
 
-// Shared epoch for cross-connector animation sync
-const PAGE_LOAD_MS = Date.now();
-
 let _animCounter = 0;
 
 export const Connector = memo(({ connector: _connector, isSelected, groupIndex = 0, groupTotal = 1, dimmed = false }: Props) => {
@@ -104,9 +101,6 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
   const predefinedColor = useColor(_connector.color);
   const { currentView } = useScene();
   const connector = useConnector(_connector.id);
-
-  // Capture animation begin time once per mount (for sync)
-  const circleBeginRef = useRef<string | null>(null);
 
   if (!connector) return null;
 
@@ -200,15 +194,8 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
   const circleSpeed = connector.circleSpeed ?? 2;
   const circleRadius = connectorWidthPx * 1.5 * (connector.circleSize ?? 1);
 
-  // Capture begin time once; recompute only when animation is toggled or speed changes
-  const circleBegin = useMemo(() => {
-    if (!circleAnimate) { circleBeginRef.current = null; return '0'; }
-    const elapsed = (Date.now() - PAGE_LOAD_MS) / 1000;
-    const offset = (elapsed % circleSpeed).toFixed(3);
-    circleBeginRef.current = `-${offset}s`;
-    return circleBeginRef.current;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [circleAnimate, circleSpeed]);
+  // All connectors use begin="0" so they share the document timeline and stay in sync
+  const circleBegin = '0';
 
   const motionPath = useMemo(() => {
     const pts = pathString.trim().split(/\s+/).filter(Boolean);
