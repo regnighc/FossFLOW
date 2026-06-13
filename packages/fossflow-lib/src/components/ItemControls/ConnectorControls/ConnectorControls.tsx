@@ -325,11 +325,41 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
             {Object.values(connectorStyleOptions).map((style) => {
               return (
                 <MenuItem key={style} value={style}>
-                  {style}
+                  {style === 'FLOW' ? 'FLOW (animated)' : style}
                 </MenuItem>
               );
             })}
           </Select>
+        </Section>
+        <Section title="Flow Animation">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={connector.flowAnimate === true || connector.style === 'FLOW'}
+                disabled={connector.style === 'FLOW'}
+                onChange={(e) => {
+                  updateConnector(connector.id, { flowAnimate: e.target.checked });
+                }}
+              />
+            }
+            label={connector.style === 'FLOW' ? 'Animated (always on for FLOW)' : 'Animate dash/dot flow'}
+          />
+          {(connector.flowAnimate === true || connector.style === 'FLOW') && (
+            <Select
+              value={connector.flowDirection || 'FORWARD'}
+              onChange={(e) => {
+                updateConnector(connector.id, {
+                  flowDirection: e.target.value as 'FORWARD' | 'BACKWARD'
+                });
+              }}
+              fullWidth
+              size="small"
+              sx={{ mt: 1 }}
+            >
+              <MenuItem value="FORWARD">→ Forward (toward arrow)</MenuItem>
+              <MenuItem value="BACKWARD">← Backward (away from arrow)</MenuItem>
+            </Select>
+          )}
         </Section>
         <Section>
           <FormControlLabel

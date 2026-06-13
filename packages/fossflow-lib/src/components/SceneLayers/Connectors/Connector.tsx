@@ -197,8 +197,14 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
   }, [connector.path.tiles]);
 
   const isFlow = connector.style === 'FLOW';
+  // flowAnimate: animate any style (explicit flag), or always-on for FLOW style
+  const isAnimated = isFlow || connector.flowAnimate === true;
+  const isForward = (connector.flowDirection ?? 'FORWARD') === 'FORWARD';
   const dashLen = connectorWidthPx * 4;
   const gapLen = connectorWidthPx * 2;
+  // After scale(-1,1) the SVG X-axis is mirrored, so positive dashoffset = backward visually.
+  // To flow FORWARD (toward the arrow): use negative offset; BACKWARD: positive.
+  const animTo = isForward ? -(dashLen + gapLen) : (dashLen + gapLen);
 
   const strokeDashArray = useMemo(() => {
     switch (connector.style) {
@@ -246,11 +252,11 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
         }}
         viewboxSize={pxSize}
       >
-        {/* Inject CSS keyframe for FLOW animation once per connector SVG */}
-        {isFlow && (
+        {/* CSS keyframe for flow animation — injected whenever any animation is active */}
+        {isAnimated && strokeDashArray !== 'none' && (
           <defs>
             <style>{`
-              @keyframes ${FLOW_ANIM_ID} { to { stroke-dashoffset: ${dashLen + gapLen}px; } }
+              @keyframes ${FLOW_ANIM_ID} { to { stroke-dashoffset: ${animTo}px; } }
               .ff-flow-line { animation: ${FLOW_ANIM_ID} 0.7s linear infinite; }
             `}</style>
           </defs>
@@ -269,7 +275,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
-              className={isFlow ? 'ff-flow-line' : undefined}
+              className={isAnimated && strokeDashArray !== 'none' ? 'ff-flow-line' : undefined}
               points={pathString}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -292,7 +298,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
-              className={isFlow ? 'ff-flow-line' : undefined}
+              className={isAnimated && strokeDashArray !== 'none' ? 'ff-flow-line' : undefined}
               points={offsetPaths.path1}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}
@@ -312,7 +318,7 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
               fill="none"
             />
             <polyline
-              className={isFlow ? 'ff-flow-line' : undefined}
+              className={isAnimated && strokeDashArray !== 'none' ? 'ff-flow-line' : undefined}
               points={offsetPaths.path2}
               stroke={getColorVariant(color.value, 'dark', { grade: 1 })}
               strokeWidth={connectorWidthPx}

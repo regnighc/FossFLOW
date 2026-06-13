@@ -59,6 +59,8 @@ export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {
   style: 'SOLID',
   lineType: 'SINGLE',
   showArrow: true,
+  flowAnimate: false,
+  flowDirection: 'FORWARD',
   arrows: []
 };
 

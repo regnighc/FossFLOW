@@ -476,7 +476,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   const switchView = (viewId: string) => {
     if (viewId === currentViewId) return;
     setCurrentViewId(viewId);
-    setFossflowKey(k => k + 1);
+    // No fossflowKey remount — useInitialDataManager now detects the active-view change
   };
 
   const addView = () => {
@@ -496,7 +496,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
     setCurrentModel(updatedData);
     setCurrentViewId(newView.id);
     setHasUnsavedChanges(true);
-    setFossflowKey(k => k + 1);
+    // No fossflowKey remount — useInitialDataManager now detects view additions
   };
 
   const renameView = (viewId: string, newName: string) => {
@@ -507,7 +507,6 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
     setDiagramData(updatedData);
     setCurrentModel(updatedData);
     setHasUnsavedChanges(true);
-    setFossflowKey(k => k + 1);
   };
 
   const deleteView = (viewId: string) => {
@@ -523,7 +522,6 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
     const newViewId = viewId === currentViewId ? remaining[0].id : currentViewId;
     setCurrentViewId(newViewId);
     setHasUnsavedChanges(true);
-    setFossflowKey(k => k + 1);
   };
 
   // Keyboard shortcuts
@@ -667,6 +665,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
           onModelUpdated={handleModelUpdated}
           editorMode={isReadonlyUrl ? 'EXPLORABLE_READONLY' : 'EDITABLE'}
           locale={currentLocale}
+          renderer={{ backgroundColor: theme === 'dark' ? '#1e293b' : '#f6faff' }}
           iconPackManager={{
             lazyLoadingEnabled: iconPackManager.lazyLoadingEnabled,
             onToggleLazyLoading: iconPackManager.toggleLazyLoading,

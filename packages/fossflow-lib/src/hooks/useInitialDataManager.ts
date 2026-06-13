@@ -46,9 +46,15 @@ export const useInitialDataManager = () => {
         const newIcons = JSON.stringify(_initialData.icons || []);
         const prevColors = JSON.stringify(prevInitialData.current.colors || []);
         const newColors = JSON.stringify(_initialData.colors || []);
+        // Also detect view additions/removals and active-view switches
+        const prevViewIds = JSON.stringify((prevInitialData.current.views || []).map((v: any) => v.id));
+        const newViewIds = JSON.stringify((_initialData.views || []).map((v: any) => v.id));
+        const prevActiveView = (prevInitialData.current as any).view ?? '';
+        const newActiveView = (_initialData as any).view ?? '';
 
         if (prevConnectors === newConnectors && prevItems === newItems &&
-            prevIcons === newIcons && prevColors === newColors) {
+            prevIcons === newIcons && prevColors === newColors &&
+            prevViewIds === newViewIds && prevActiveView === newActiveView) {
           // Data hasn't actually changed, skip reload
           return;
         }

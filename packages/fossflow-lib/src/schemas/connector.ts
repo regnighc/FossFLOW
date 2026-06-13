@@ -41,6 +41,9 @@ export const connectorSchema = z.object({
   style: z.enum(connectorStyleOptions).optional(),
   lineType: z.enum(connectorLineTypeOptions).optional(),
   showArrow: z.boolean().optional(),
+  // Animated flow: animate the dash pattern to show data flow direction
+  flowAnimate: z.boolean().optional(),
+  flowDirection: z.enum(['FORWARD', 'BACKWARD']).optional(),
   // Additional arrows at arbitrary positions along the connector (0–100%)
   arrows: z.array(z.object({ id, position: z.number().min(0).max(100) })).max(20).optional(),
   anchors: z.array(anchorSchema)
