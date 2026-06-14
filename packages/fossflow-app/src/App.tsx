@@ -81,7 +81,27 @@ async function captureThumbnail(): Promise<string | null> {
   try {
     const el = document.querySelector('.fossflow-container') as HTMLElement | null;
     if (!el) return null;
-    return await htmlToImage.toJpeg(el, { quality: 0.6, width: 320, height: 200, skipAutoScale: false });
+    // Capture at natural size, then downscale via canvas to 320×200
+    const dataUrl = await htmlToImage.toPng(el, { quality: 0.8, skipFonts: true });
+    return await new Promise<string | null>((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const W = 320, H = 200;
+        const canvas = document.createElement('canvas');
+        canvas.width = W; canvas.height = H;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { resolve(null); return; }
+        const scale = Math.min(W / img.width, H / img.height);
+        const w = img.width * scale;
+        const h = img.height * scale;
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(0, 0, W, H);
+        ctx.drawImage(img, (W - w) / 2, (H - h) / 2, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.75));
+      };
+      img.onerror = () => resolve(null);
+      img.src = dataUrl;
+    });
   } catch {
     return null;
   }
@@ -208,6 +228,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
       _editorPersist.id = currentDiagramIdRef.current;
       _editorPersist.viewId = currentViewIdRef.current;
       _editorPersist.hasUnsaved = hasUnsavedRef.current;
+      if (thumbnailTimerRef.current) clearTimeout(thumbnailTimerRef.current);
     };
   }, []);
   const [quota, setQuota] = useState<{ used: number; total: number } | null>(null);
@@ -242,6 +263,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   // Initialised from persisted state so navigation-restore works immediately.
   const latestModelRef = useRef<DiagramData | null>(_editorPersist.model);
   const modelFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const thumbnailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Load quota info
   const refreshQuota = useCallback(async () => {
@@ -348,6 +370,17 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
         setDiagramData(m);
       }
     }, 300);
+
+    // Background thumbnail auto-update: capture 15s after last change if diagram is saved
+    if (thumbnailTimerRef.current) clearTimeout(thumbnailTimerRef.current);
+    thumbnailTimerRef.current = setTimeout(async () => {
+      const id = currentDiagramIdRef.current;
+      if (!id) return;
+      try {
+        const thumb = await captureThumbnail();
+        if (thumb) await authService.updateThumbnail(id, thumb);
+      } catch {}
+    }, 15000);
   }, [isReadonlyUrl, diagramName]);
 
   // Save to account

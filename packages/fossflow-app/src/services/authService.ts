@@ -102,6 +102,10 @@ export const authService = {
     }
   },
 
+  async updateThumbnail(id: string, thumbnail: string | null): Promise<void> {
+    await apiCall('PATCH', `/diagrams/${id}/thumbnail`, { thumbnail });
+  },
+
   async deleteDiagram(id: string): Promise<void> {
     const res = await apiCall('DELETE', `/diagrams/${id}`);
     const data = await res.json();

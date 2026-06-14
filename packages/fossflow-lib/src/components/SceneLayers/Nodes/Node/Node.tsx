@@ -20,7 +20,7 @@ interface Props {
 
 export const Node = memo(({ node, order, dimmed = false }: Props) => {
   const modelItem = useModelItem(node.id);
-  const { iconComponent } = useIcon(modelItem?.icon, node.iconScale, node.iconRotation);
+  const { iconComponent } = useIcon(modelItem?.icon, node.iconScale, node.iconRotation, node.iconColors);
   const [showDescription, setShowDescription] = useState(true);
 
   const position = useMemo(() => {

@@ -4,8 +4,14 @@ import { getItemById } from 'src/utils';
 import { IsometricIcon } from 'src/components/SceneLayers/Nodes/Node/IconTypes/IsometricIcon';
 import { NonIsometricIcon } from 'src/components/SceneLayers/Nodes/Node/IconTypes/NonIsometricIcon';
 import { DEFAULT_ICON } from 'src/config';
+import { applyIconColors } from 'src/utils/svgColors';
 
-export const useIcon = (id: string | undefined, overrideScale?: number, overrideRotation?: number) => {
+export const useIcon = (
+  id: string | undefined,
+  overrideScale?: number,
+  overrideRotation?: number,
+  iconColors?: Record<string, string>
+) => {
   const [hasLoaded, setHasLoaded] = React.useState(false);
   const icons = useModelStore((state) => {
     return state.icons;
@@ -26,14 +32,18 @@ export const useIcon = (id: string | undefined, overrideScale?: number, override
     const scale = overrideScale ?? icon.scale ?? 1;
     const rotation = overrideRotation ?? 0;
 
+    const resolvedUrl = iconColors && Object.keys(iconColors).length
+      ? applyIconColors(icon.url, iconColors)
+      : icon.url;
+
     if (!icon.isIsometric) {
       setHasLoaded(true);
-      return <NonIsometricIcon icon={icon} scale={scale} rotation={rotation} />;
+      return <NonIsometricIcon icon={{ ...icon, url: resolvedUrl }} scale={scale} rotation={rotation} />;
     }
 
     return (
       <IsometricIcon
-        url={icon.url}
+        url={resolvedUrl}
         scale={scale}
         rotation={rotation}
         onImageLoaded={() => {
@@ -41,7 +51,7 @@ export const useIcon = (id: string | undefined, overrideScale?: number, override
         }}
       />
     );
-  }, [icon, overrideScale, overrideRotation]);
+  }, [icon, overrideScale, overrideRotation, iconColors]);
 
   return {
     icon,

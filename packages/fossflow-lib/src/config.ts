@@ -45,7 +45,8 @@ export const VIEW_ITEM_DEFAULTS: Required<Omit<ViewItem, 'id' | 'tile'>> = {
   labelHeight: 80,
   iconScale: 1,
   iconRotation: 0,
-  nameAlign: 'center'
+  nameAlign: 'center',
+  iconColors: {}
 };
 
 export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {

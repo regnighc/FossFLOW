@@ -348,6 +348,16 @@ app.put('/api/diagrams/:id', authenticate, writeLimiter, (req, res) => {
   res.json({ id: req.params.id, updated_at: now });
 });
 
+app.patch('/api/diagrams/:id/thumbnail', authenticate, writeLimiter, (req, res) => {
+  const existing = db.prepare('SELECT id FROM diagrams WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
+  if (!existing) return res.status(404).json({ error: 'Diagram not found' });
+  const { thumbnail } = req.body;
+  const now = new Date().toISOString();
+  db.prepare('UPDATE diagrams SET thumbnail = ?, updated_at = ? WHERE id = ? AND user_id = ?')
+    .run(thumbnail || null, now, req.params.id, req.user.id);
+  res.json({ ok: true });
+});
+
 app.delete('/api/diagrams/:id', authenticate, writeLimiter, (req, res) => {
   const result = db.prepare('DELETE FROM diagrams WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);
   if (result.changes === 0) return res.status(404).json({ error: 'Diagram not found' });
