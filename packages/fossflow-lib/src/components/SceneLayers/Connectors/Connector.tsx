@@ -199,8 +199,14 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
   const circleSpeed = connector.circleSpeed ?? 2;
   const circleRadius = connectorWidthPx * 1.5 * (connector.circleSize ?? 1);
 
-  // All connectors use begin="0" so they share the document timeline and stay in sync
-  const circleBegin = '0';
+  // Sync circle animation to the shared document timeline.
+  // negative begin = "start N seconds ago" → all connectors with the same cycleSpeed
+  // show the same phase in the animation cycle regardless of when they were mounted.
+  const circleBegin = useMemo(() => {
+    const cycleMs = circleSpeed * 1000;
+    const offsetMs = performance.now() % cycleMs;
+    return `-${(offsetMs / 1000).toFixed(3)}s`;
+  }, [circleSpeed]);
 
   const motionPath = useMemo(() => {
     const pts = pathString.trim().split(/\s+/).filter(Boolean);

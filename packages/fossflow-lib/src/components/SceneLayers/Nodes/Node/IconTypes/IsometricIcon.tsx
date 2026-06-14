@@ -32,7 +32,8 @@ export const IsometricIcon = ({ url, scale = 1, rotation = 0, onImageLoaded }: P
         position: 'absolute',
         width: PROJECTED_TILE_SIZE.width * 0.8 * scale,
         pointerEvents: 'none',
-        transform: rotation ? `rotate(${rotation}deg)` : undefined
+        // Use perspective rotateY so the icon appears to turn in isometric space
+        transform: rotation ? `perspective(500px) rotateY(${rotation}deg)` : undefined
       }}
     />
   );

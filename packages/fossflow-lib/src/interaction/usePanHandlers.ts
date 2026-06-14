@@ -15,24 +15,41 @@ export const usePanHandlers = () => {
   const isPanningRef = useRef(false);
   const prevModeRef = useRef(uiStateApi.getState().mode);
 
-  const startPan = useCallback(() => {
-    if (modeType !== 'PAN') {
-      isPanningRef.current = true;
-      prevModeRef.current = uiStateApi.getState().mode;
-      actions.setMode({
-        type: 'PAN',
-        showCursor: false,
-        temp: true
-      });
+  // Track the last mode we were in BEFORE entering PAN (from any source).
+  // Updated whenever the mode changes to something other than PAN.
+  const lastNonPanModeRef = useRef(uiStateApi.getState().mode);
+  const prevModeTypeRef = useRef(modeType);
+  useEffect(() => {
+    if (modeType !== 'PAN' && prevModeTypeRef.current !== modeType) {
+      lastNonPanModeRef.current = uiStateApi.getState().mode;
     }
-  }, [modeType, actions]);
+    prevModeTypeRef.current = modeType;
+  }, [modeType, uiStateApi]);
+
+  const startPan = useCallback(() => {
+    if (!isPanningRef.current) {
+      isPanningRef.current = true;
+      if (modeType !== 'PAN') {
+        // Triggered by gesture (middle-click, ctrl+click, etc.) while not in PAN mode
+        prevModeRef.current = uiStateApi.getState().mode;
+        actions.setMode({
+          type: 'PAN',
+          showCursor: false,
+          temp: true
+        });
+      } else {
+        // Already in PAN mode (from toolbar or hotkey) — restore to last non-PAN mode on mouseup
+        prevModeRef.current = lastNonPanModeRef.current;
+      }
+    }
+  }, [modeType, actions, uiStateApi]);
 
   const endPan = useCallback(() => {
     if (isPanningRef.current) {
       isPanningRef.current = false;
       actions.setMode(prevModeRef.current);
     }
-  }, [modeType, actions]);
+  }, [actions]);
 
   const isEmptyArea = useCallback((e: SlimMouseEvent): boolean => {
     if (!rendererEl || e.target !== rendererEl) return false;
@@ -46,9 +63,13 @@ export const usePanHandlers = () => {
   }, [rendererEl, mouseTile, scene]);
 
   const handleMouseDown = useCallback((e: SlimMouseEvent): boolean => {
+    const inPanMode = modeType === 'PAN';
+
     if (
       (e.button === 1 && panSettings.middleClickPan) ||
       (e.button === 2 && panSettings.rightClickPan) ||
+      // Left-click while in explicit PAN mode → treat as gesture, restore after mouseup
+      (e.button === 0 && inPanMode) ||
       (e.button === 0) && (
         (panSettings.ctrlClickPan && e.ctrlKey) ||
         (panSettings.altClickPan && e.altKey) ||
@@ -59,9 +80,9 @@ export const usePanHandlers = () => {
       return true;
     }
     return false;
-  }, [panSettings, startPan, isEmptyArea]);
+  }, [panSettings, modeType, startPan, isEmptyArea]);
 
-  const handleMouseUp = useCallback((e: SlimMouseEvent): boolean => {
+  const handleMouseUp = useCallback((_e: SlimMouseEvent): boolean => {
     if (isPanningRef.current) {
       endPan();
       return true;

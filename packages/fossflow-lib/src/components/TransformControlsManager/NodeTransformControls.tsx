@@ -1,17 +1,9 @@
 import React from 'react';
-import { useViewItem } from 'src/hooks/useViewItem';
-import { TransformControls } from './TransformControls';
 
 interface Props {
   id: string;
 }
 
-export const NodeTransformControls = ({ id }: Props) => {
-  const node = useViewItem(id);
-
-  if (!node) {
-    return null;
-  }
-
-  return <TransformControls from={node.tile} to={node.tile} />;
-};
+// Node selection is shown by SelectionHighlight (animated dashes). The static
+// dashed TransformControls border is not needed for nodes — nodes can't be resized.
+export const NodeTransformControls = (_props: Props) => null;

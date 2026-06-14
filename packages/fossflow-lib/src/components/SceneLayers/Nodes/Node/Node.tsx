@@ -31,14 +31,13 @@ export const Node = memo(({ node, order, dimmed = false }: Props) => {
   }, [node.tile]);
 
   const description = useMemo(() => {
-    if (
-      !modelItem ||
-      modelItem.description === undefined ||
-      modelItem.description === MARKDOWN_EMPTY_VALUE
-    )
-      return null;
-
-    return modelItem.description;
+    if (!modelItem) return null;
+    const d = modelItem.description;
+    if (!d) return null;
+    // Strip all HTML tags and whitespace to check for actual visible text
+    const plainText = d.replace(/<[^>]*>/g, '').replace(/&[a-z]+;/gi, ' ').trim();
+    if (!plainText) return null;
+    return d;
   }, [modelItem?.description]);
 
   if (!modelItem) {
