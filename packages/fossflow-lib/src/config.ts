@@ -70,7 +70,8 @@ export const CONNECTOR_DEFAULTS: Required<Omit<Connector, 'id' | 'color'>> = {
   showStartArrow: false,
   circleAnimate: false,
   circleSize: 1,
-  circleSpeed: 2
+  circleSpeed: 2,
+  outlineColor: ''
 };
 
 // The boundaries of the search area for the pathfinder algorithm

@@ -189,6 +189,11 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
       .filter(a => a.pos !== null) as { id: string; pos: { x: number; y: number; rotation: number } }[];
   }, [connector.arrows, connector.path.tiles, drawOffset]);
 
+  // Line outline/shadow beneath main color (white by default, transparent to disable)
+  const outlineStroke = connector.outlineColor === 'transparent' ? 'none'
+    : (connector.outlineColor || theme.palette.common.white);
+  const outlineOpacity = connector.outlineColor === 'transparent' ? 0 : 0.7;
+
   // Circle animation
   const circleAnimate = connector.circleAnimate === true;
   const circleSpeed = connector.circleSpeed ?? 2;
@@ -252,11 +257,11 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
           <>
             <polyline
               points={pathString}
-              stroke={theme.palette.common.white}
+              stroke={outlineStroke}
               strokeWidth={connectorWidthPx * 1.4}
               strokeLinecap="round"
               strokeLinejoin="round"
-              strokeOpacity={0.7}
+              strokeOpacity={outlineOpacity}
               strokeDasharray={strokeDashArray}
               fill="none"
             />
@@ -274,11 +279,11 @@ export const Connector = memo(({ connector: _connector, isSelected, groupIndex =
           </>
         ) : offsetPaths ? (
           <>
-            <polyline points={offsetPaths.path1} stroke={theme.palette.common.white} strokeWidth={connectorWidthPx * 1.4} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.7} strokeDasharray={strokeDashArray} fill="none" />
+            <polyline points={offsetPaths.path1} stroke={outlineStroke} strokeWidth={connectorWidthPx * 1.4} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={outlineOpacity} strokeDasharray={strokeDashArray} fill="none" />
             <polyline points={offsetPaths.path1} stroke={circleColor} strokeWidth={connectorWidthPx} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={strokeDashArray} fill="none">
               {svgAnimate}
             </polyline>
-            <polyline points={offsetPaths.path2} stroke={theme.palette.common.white} strokeWidth={connectorWidthPx * 1.4} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={0.7} strokeDasharray={strokeDashArray} fill="none" />
+            <polyline points={offsetPaths.path2} stroke={outlineStroke} strokeWidth={connectorWidthPx * 1.4} strokeLinecap="round" strokeLinejoin="round" strokeOpacity={outlineOpacity} strokeDasharray={strokeDashArray} fill="none" />
             <polyline points={offsetPaths.path2} stroke={circleColor} strokeWidth={connectorWidthPx} strokeLinecap="round" strokeLinejoin="round" strokeDasharray={strokeDashArray} fill="none">
               {svgAnimate}
             </polyline>

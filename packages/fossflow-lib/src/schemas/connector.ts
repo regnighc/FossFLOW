@@ -55,5 +55,7 @@ export const connectorSchema = z.object({
   // Traveling circle animation
   circleAnimate: z.boolean().optional(),
   circleSize: z.number().optional(),
-  circleSpeed: z.number().optional()
+  circleSpeed: z.number().optional(),
+  // Line outline/shadow color (the white border effect beneath the main line color)
+  outlineColor: z.string().optional()
 });

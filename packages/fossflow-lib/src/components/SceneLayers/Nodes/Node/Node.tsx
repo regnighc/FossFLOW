@@ -123,7 +123,7 @@ export const Node = memo(({ node, order, dimmed = false }: Props) => {
                       '&:hover': { opacity: 1 }
                     }}
                   >
-                    {showDescription ? '⌃' : '⌄'}
+                    ^
                   </Box>
                 )}
               </Box>

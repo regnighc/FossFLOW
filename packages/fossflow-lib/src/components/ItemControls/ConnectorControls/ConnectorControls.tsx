@@ -510,6 +510,31 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
             </Box>
           )}
         </Section>
+        <Section title="Line Outline">
+          <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            The border/shadow drawn beneath the connector line
+          </Typography>
+          <Button
+            variant={connector.outlineColor === 'transparent' ? 'contained' : 'outlined'}
+            size="small"
+            onClick={() => {
+              updateConnector(connector.id, {
+                outlineColor: connector.outlineColor === 'transparent' ? '' : 'transparent'
+              });
+            }}
+            sx={{ mb: 2 }}
+          >
+            {connector.outlineColor === 'transparent' ? 'Outline Hidden' : 'Hide Outline'}
+          </Button>
+          {connector.outlineColor !== 'transparent' && (
+            <CustomColorInput
+              value={connector.outlineColor || '#ffffff'}
+              onChange={(color) => {
+                updateConnector(connector.id, { outlineColor: color });
+              }}
+            />
+          )}
+        </Section>
       <Section>
         <Box>
           <DeleteButton

@@ -306,7 +306,7 @@ export const useInteractionManager = () => {
         uiState,
         rendererRef: rendererRef.current,
         rendererSize,
-        isRendererInteraction: rendererRef.current === e.target
+        isRendererInteraction: !!(rendererEl?.contains(e.target as Node))
       };
 
       if (reducerTypeRef.current !== uiState.mode.type) {
