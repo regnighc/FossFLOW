@@ -14,6 +14,7 @@ export interface DiagramMeta {
   thumbnail: string | null;
   created_at: string;
   updated_at: string;
+  manual_saved_at: string | null;
 }
 
 function getToken(): string | null {
@@ -90,7 +91,7 @@ export const authService = {
 
   async saveDiagram(name: string, diagramData: unknown, thumbnail: string | null, id?: string): Promise<{ id: string }> {
     if (id) {
-      const res = await apiCall('PUT', `/diagrams/${id}`, { name, thumbnail, ...(diagramData as object) });
+      const res = await apiCall('PUT', `/diagrams/${id}`, { name, thumbnail, isManualSave: true, ...(diagramData as object) });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       return { id };
@@ -100,6 +101,10 @@ export const authService = {
       if (!res.ok) throw new Error(data.error || 'Failed to save');
       return data;
     }
+  },
+
+  async autoSaveDiagram(id: string, name: string, diagramData: unknown, thumbnail: string | null): Promise<void> {
+    await apiCall('PUT', `/diagrams/${id}`, { name, thumbnail, ...(diagramData as object) });
   },
 
   async updateThumbnail(id: string, thumbnail: string | null): Promise<void> {

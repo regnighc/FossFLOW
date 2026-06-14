@@ -229,6 +229,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
       _editorPersist.viewId = currentViewIdRef.current;
       _editorPersist.hasUnsaved = hasUnsavedRef.current;
       if (thumbnailTimerRef.current) clearTimeout(thumbnailTimerRef.current);
+      if (autoSaveIntervalRef.current) clearInterval(autoSaveIntervalRef.current);
     };
   }, []);
   const [quota, setQuota] = useState<{ used: number; total: number } | null>(null);
@@ -264,6 +265,7 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   const latestModelRef = useRef<DiagramData | null>(_editorPersist.model);
   const modelFlushTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const thumbnailTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Load quota info
   const refreshQuota = useCallback(async () => {
@@ -272,6 +274,34 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   }, [user]);
 
   useEffect(() => { refreshQuota(); }, [refreshQuota]);
+
+  // Auto-save every 30s when a diagram has been manually saved at least once
+  useEffect(() => {
+    if (autoSaveIntervalRef.current) clearInterval(autoSaveIntervalRef.current);
+    if (!user || !currentDiagramId) return;
+    autoSaveIntervalRef.current = setInterval(async () => {
+      const id = currentDiagramIdRef.current;
+      const name = diagramNameRef.current;
+      if (!id || !name) return;
+      try {
+        const model = latestModelRef.current;
+        if (!model) return;
+        const importedIcons = (model.icons || []).filter((i: any) => i.collection === 'imported');
+        const saveData = {
+          icons: importedIcons,
+          colors: model.colors || [],
+          items: model.items || [],
+          views: model.views || [],
+          fitToScreen: true
+        };
+        const thumb = await captureThumbnail();
+        await authService.autoSaveDiagram(id, name, saveData, thumb);
+      } catch {}
+    }, 30000);
+    return () => {
+      if (autoSaveIntervalRef.current) clearInterval(autoSaveIntervalRef.current);
+    };
+  }, [user, currentDiagramId]);
 
   // Load diagram from ?diagram=id query param (from DrawingsPage)
   useEffect(() => {

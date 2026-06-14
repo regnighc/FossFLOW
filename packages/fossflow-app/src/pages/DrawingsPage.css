@@ -216,7 +216,20 @@
 .drawing-card-date {
   font-size: 12px;
   color: var(--text-secondary);
-  margin: 0 0 12px;
+  margin: 0 0 4px;
+}
+
+.drawing-card-date--autosave {
+  color: #f59e0b;
+}
+.drawing-card-date--autosave::before {
+  content: '⟳ ';
+}
+
+.drawing-card-date--manual {
+  color: var(--text-secondary);
+  opacity: 0.65;
+  margin-bottom: 8px;
 }
 
 .drawing-card-actions {

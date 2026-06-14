@@ -134,13 +134,19 @@ export const ConnectorLabel = memo(({ connector: sceneConnector, groupIndex = 0,
   return (
     <>
       {labelPositions.map(({ label, position }) => {
+        const hOffset = label.horizontalOffset || 0;
+        // Isometric "flat on ground" transform: skew + scale to match isometric grid
+        const isoTransform = label.isometric
+          ? 'skewX(-26.565deg) scaleY(0.5)'
+          : undefined;
+
         return (
           <Box
             key={label.id}
             sx={{ position: 'absolute', pointerEvents: 'none' }}
             style={{
               maxWidth: PROJECTED_TILE_SIZE.width,
-              left: position.x,
+              left: position.x + hOffset,
               top: position.y
             }}
           >
@@ -153,10 +159,15 @@ export const ConnectorLabel = memo(({ connector: sceneConnector, groupIndex = 0,
                 px: 1,
                 borderRadius: 2,
                 backgroundColor: 'background.paper',
-                opacity: 0.95
+                opacity: 0.95,
+                ...(isoTransform ? { transform: isoTransform, transformOrigin: 'left center' } : {})
               }}
             >
-              <Typography color="text.secondary" variant="body2">
+              <Typography
+                color={label.color || 'text.secondary'}
+                variant="body2"
+                sx={label.fontSize ? { fontSize: label.fontSize } : undefined}
+              >
                 {label.text}
               </Typography>
             </Label>

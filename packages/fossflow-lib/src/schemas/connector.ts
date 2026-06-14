@@ -7,10 +7,14 @@ export const connectorLineTypeOptions = ['SINGLE', 'DOUBLE', 'DOUBLE_WITH_CIRCLE
 export const connectorLabelSchema = z.object({
   id,
   text: constrainedStrings.description,
-  position: z.number().min(0).max(100), // Percentage along the path (0-100)
-  height: z.number().optional(), // Vertical offset
-  line: z.enum(['1', '2']).optional(), // Which line for double line types (defaults to '1')
-  showLine: z.boolean().optional() // Show the dotted line connecting label to connector (defaults to true)
+  position: z.number().min(0).max(100),
+  height: z.number().optional(),
+  horizontalOffset: z.number().optional(),
+  line: z.enum(['1', '2']).optional(),
+  showLine: z.boolean().optional(),
+  fontSize: z.number().min(8).max(48).optional(),
+  color: z.string().optional(),
+  isometric: z.boolean().optional()
 });
 
 export const anchorSchema = z.object({

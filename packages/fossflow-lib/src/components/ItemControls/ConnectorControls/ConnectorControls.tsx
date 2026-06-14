@@ -245,6 +245,67 @@ export const ConnectorControls = ({ id, embedded }: Props) => {
                   </Box>
 
                   <Box>
+                    <Typography variant="caption" color="text.secondary">
+                      Horizontal Offset: {label.horizontalOffset || 0}px
+                    </Typography>
+                    <Slider
+                      marks
+                      step={10}
+                      min={-200}
+                      max={200}
+                      value={label.horizontalOffset || 0}
+                      onChange={(_, val) => handleUpdateLabel(label.id, { horizontalOffset: val as number })}
+                    />
+                  </Box>
+
+                  <Box sx={{ mt: 1 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      Font Size: {label.fontSize || 14}px
+                    </Typography>
+                    <Slider
+                      marks
+                      step={2}
+                      min={8}
+                      max={48}
+                      value={label.fontSize || 14}
+                      onChange={(_, val) => handleUpdateLabel(label.id, { fontSize: val as number })}
+                    />
+                  </Box>
+
+                  <Box sx={{ mt: 1, mb: 1 }}>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5 }}>
+                      Label Color
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CustomColorInput
+                        value={label.color || '#888888'}
+                        onChange={(color) => handleUpdateLabel(label.id, { color })}
+                      />
+                      {label.color && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleUpdateLabel(label.id, { color: '' })}
+                        >
+                          Reset
+                        </Button>
+                      )}
+                    </Box>
+                  </Box>
+
+                  <Box>
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={label.isometric === true}
+                          onChange={(e) => handleUpdateLabel(label.id, { isometric: e.target.checked })}
+                        />
+                      }
+                      label="Isometric orientation"
+                    />
+                  </Box>
+
+                  <Box>
                     <FormControlLabel
                       control={
                         <Switch

@@ -11,6 +11,7 @@ import { useModelItem } from 'src/hooks/useModelItem';
 import { useModelStore } from 'src/stores/modelStore';
 import { getItemById } from 'src/utils';
 import { extractSvgColors, SvgColorEntry } from 'src/utils/svgColors';
+import { CustomColorInput } from 'src/components/ColorSelector/CustomColorInput';
 import { DeleteButton } from '../../components/DeleteButton';
 import { Section } from '../../components/Section';
 
@@ -191,6 +192,41 @@ export const NodeSettings = ({
           )}
         </Section>
       )}
+
+      <Section title="Label Text Color">
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+          Node name color
+        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CustomColorInput
+            value={node.labelColor || '#000000'}
+            onChange={(color) => onViewItemUpdated({ labelColor: color })}
+          />
+          {node.labelColor && (
+            <Button size="small" variant="outlined" onClick={() => onViewItemUpdated({ labelColor: '' })}>
+              Reset
+            </Button>
+          )}
+        </Box>
+        {modelItem.description && (
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1.5, mb: 1 }}>
+              Description color
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CustomColorInput
+                value={node.descriptionColor || '#000000'}
+                onChange={(color) => onViewItemUpdated({ descriptionColor: color })}
+              />
+              {node.descriptionColor && (
+                <Button size="small" variant="outlined" onClick={() => onViewItemUpdated({ descriptionColor: '' })}>
+                  Reset
+                </Button>
+              )}
+            </Box>
+          </>
+        )}
+      </Section>
 
       <Section>
         <Box>

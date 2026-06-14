@@ -86,7 +86,8 @@ db.exec(`
     data TEXT NOT NULL,
     thumbnail TEXT,
     created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    updated_at TEXT NOT NULL,
+    manual_saved_at TEXT
   );
 
   CREATE TABLE IF NOT EXISTS settings (
@@ -104,6 +105,11 @@ db.exec(`
     expires_at TEXT NOT NULL
   );
 `);
+
+// Migrate existing DB: add manual_saved_at if missing
+try {
+  db.prepare('ALTER TABLE diagrams ADD COLUMN manual_saved_at TEXT').run();
+} catch {}
 
 // ---------------------------------------------------------------------------
 // Settings helpers
@@ -298,7 +304,7 @@ app.get('/api/auth/invite-check', (req, res) => {
 
 app.get('/api/diagrams', authenticate, readLimiter, (req, res) => {
   const diagrams = db.prepare(`
-    SELECT id, name, thumbnail, created_at, updated_at FROM diagrams
+    SELECT id, name, thumbnail, created_at, updated_at, manual_saved_at FROM diagrams
     WHERE user_id = ? ORDER BY updated_at DESC
   `).all(req.user.id);
   res.json(diagrams);
@@ -328,24 +334,30 @@ app.post('/api/diagrams', authenticate, writeLimiter, (req, res) => {
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO diagrams (id, user_id, name, data, thumbnail, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(id, user.id, name, JSON.stringify(diagramData), thumbnail || null, now, now);
+    INSERT INTO diagrams (id, user_id, name, data, thumbnail, created_at, updated_at, manual_saved_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(id, user.id, name, JSON.stringify(diagramData), thumbnail || null, now, now, now);
 
-  res.status(201).json({ id, name, created_at: now, updated_at: now });
+  res.status(201).json({ id, name, created_at: now, updated_at: now, manual_saved_at: now });
 });
 
 app.put('/api/diagrams/:id', authenticate, writeLimiter, (req, res) => {
   const existing = db.prepare('SELECT id FROM diagrams WHERE id = ? AND user_id = ?').get(req.params.id, req.user.id);
   if (!existing) return res.status(404).json({ error: 'Diagram not found' });
 
-  const { name, thumbnail, ...diagramData } = req.body;
+  const { name, thumbnail, isManualSave, ...diagramData } = req.body;
   const now = new Date().toISOString();
-  db.prepare(`
-    UPDATE diagrams SET name = ?, data = ?, thumbnail = ?, updated_at = ? WHERE id = ? AND user_id = ?
-  `).run(name || 'Untitled', JSON.stringify(diagramData), thumbnail || null, now, req.params.id, req.user.id);
+  if (isManualSave) {
+    db.prepare(`
+      UPDATE diagrams SET name = ?, data = ?, thumbnail = ?, updated_at = ?, manual_saved_at = ? WHERE id = ? AND user_id = ?
+    `).run(name || 'Untitled', JSON.stringify(diagramData), thumbnail || null, now, now, req.params.id, req.user.id);
+  } else {
+    db.prepare(`
+      UPDATE diagrams SET name = ?, data = ?, thumbnail = ?, updated_at = ? WHERE id = ? AND user_id = ?
+    `).run(name || 'Untitled', JSON.stringify(diagramData), thumbnail || null, now, req.params.id, req.user.id);
+  }
 
-  res.json({ id: req.params.id, updated_at: now });
+  res.json({ id: req.params.id, updated_at: now, manual_saved_at: isManualSave ? now : undefined });
 });
 
 app.patch('/api/diagrams/:id/thumbnail', authenticate, writeLimiter, (req, res) => {

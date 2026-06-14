@@ -64,6 +64,14 @@ export function DrawingsPage() {
     } catch { return iso; }
   };
 
+  const getSaveStatus = (diagram: DiagramMeta) => {
+    const manualTs = diagram.manual_saved_at ? new Date(diagram.manual_saved_at).getTime() : null;
+    const updatedTs = new Date(diagram.updated_at).getTime();
+    // If updated_at is meaningfully newer than manual_saved_at (>5s), it's an auto-save
+    const isAutoSaved = manualTs && (updatedTs - manualTs) > 5000;
+    return { isAutoSaved, manualTs, updatedTs };
+  };
+
   return (
     <div className="drawings-page">
       <div className="drawings-header">
@@ -139,9 +147,30 @@ export function DrawingsPage() {
                 </div>
                 <div className="drawing-card-body">
                   <h3 className="drawing-card-name" title={diagram.name}>{diagram.name}</h3>
-                  <p className="drawing-card-date">
-                    Updated {formatDate(diagram.updated_at)}
-                  </p>
+                  {(() => {
+                    const { isAutoSaved, manualTs } = getSaveStatus(diagram);
+                    return (
+                      <>
+                        {isAutoSaved ? (
+                          <>
+                            <p className="drawing-card-date drawing-card-date--autosave">
+                              Auto-saved {formatDate(diagram.updated_at)}
+                            </p>
+                            {manualTs && (
+                              <p className="drawing-card-date drawing-card-date--manual">
+                                Manually saved {formatDate(diagram.manual_saved_at!)}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="drawing-card-date">
+                            Saved {formatDate(diagram.manual_saved_at || diagram.updated_at)}
+                          </p>
+                        )}
+                      </>
+                    );
+                  })()}
+
                   <div className="drawing-card-actions">
                     <button
                       className="drawings-btn-primary"

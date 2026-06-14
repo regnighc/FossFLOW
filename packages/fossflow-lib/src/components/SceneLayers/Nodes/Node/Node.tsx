@@ -90,7 +90,7 @@ export const Node = memo(({ node, order, dimmed = false }: Props) => {
                     fontWeight={600}
                     sx={{
                       textAlign: nameAlign,
-                      color: 'var(--ff-label-text, rgba(0,0,0,0.87))',
+                      color: node.labelColor || 'var(--ff-label-text, rgba(0,0,0,0.87))',
                       pr: description ? 2 : 0
                     }}
                   >
@@ -98,7 +98,11 @@ export const Node = memo(({ node, order, dimmed = false }: Props) => {
                   </Typography>
                 )}
                 {description && showDescription && (
-                  <RichTextEditor value={description} readOnly />
+                  <RichTextEditor
+                    value={description}
+                    readOnly
+                    color={node.descriptionColor || undefined}
+                  />
                 )}
                 {description && (
                   <Box

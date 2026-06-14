@@ -11,7 +11,9 @@ export const viewItemSchema = z.object({
   iconScale: z.number().optional(),
   iconRotation: z.number().optional(),
   nameAlign: z.enum(['left', 'center', 'right']).optional(),
-  iconColors: z.record(z.string()).optional()
+  iconColors: z.record(z.string()).optional(),
+  labelColor: z.string().optional(),
+  descriptionColor: z.string().optional()
 });
 
 export const viewSchema = z.object({

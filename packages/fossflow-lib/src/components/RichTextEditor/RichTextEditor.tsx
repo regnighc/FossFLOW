@@ -9,6 +9,7 @@ interface Props {
   readOnly?: boolean;
   height?: number;
   styles?: React.CSSProperties;
+  color?: string;
 }
 
 // Rich text formatting tools
@@ -43,7 +44,8 @@ export const RichTextEditor = ({
   onChange,
   readOnly,
   height = 120,
-  styles
+  styles,
+  color
 }: Props) => {
   const modules = useMemo(() => {
     if (!readOnly)
@@ -77,9 +79,10 @@ export const RichTextEditor = ({
             ...styles
           },
           '.ql-editor': {
-            whiteSpace: 'pre-wrap', // Preserve multiple spaces and tabs
+            whiteSpace: 'pre-wrap',
             ...(readOnly ? { p: 0 } : {}),
-            padding: '12px 15px' // Add consistent padding to prevent text overlap with tooltips
+            padding: '12px 15px',
+            ...(color ? { color } : {})
           },
           '.ql-tooltip': {
             zIndex: 1000 // Ensure tooltips appear above content but don't obscure text
