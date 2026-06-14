@@ -56,7 +56,14 @@ const getEditorModeMapping = (editorMode: keyof typeof EditorModeEnum) => {
   return availableUiFeatures;
 };
 
-export const UiOverlay = () => {
+interface UiOverlayProps {
+  hideMainMenu?: boolean;
+  hideToolMenu?: boolean;
+  hideZoomControls?: boolean;
+  hideViewTitle?: boolean;
+}
+
+export const UiOverlay = ({ hideMainMenu = false, hideToolMenu = false, hideZoomControls = false, hideViewTitle = false }: UiOverlayProps) => {
   const theme = useTheme();
   const contextMenuAnchorRef = useRef<HTMLDivElement>(null);
   const toolMenuRef = useRef<HTMLDivElement>(null);
@@ -137,7 +144,7 @@ export const UiOverlay = () => {
           </UiElement>
         )}
 
-        {availableTools.includes('TOOL_MENU') && (
+        {availableTools.includes('TOOL_MENU') && !hideToolMenu && (
           <Box
             ref={toolMenuRef}
             sx={{
@@ -153,7 +160,7 @@ export const UiOverlay = () => {
           </Box>
         )}
 
-        {availableTools.includes('ZOOM_CONTROLS') && (
+        {availableTools.includes('ZOOM_CONTROLS') && !hideZoomControls && (
           <Box
             sx={{
               position: 'absolute',
@@ -168,7 +175,7 @@ export const UiOverlay = () => {
           </Box>
         )}
 
-        {availableTools.includes('MAIN_MENU') && (
+        {availableTools.includes('MAIN_MENU') && !hideMainMenu && (
           <Box
             sx={{
               position: 'absolute'
@@ -182,7 +189,7 @@ export const UiOverlay = () => {
           </Box>
         )}
 
-        {availableTools.includes('VIEW_TITLE') && (
+        {availableTools.includes('VIEW_TITLE') && !hideViewTitle && (
           <Box
             sx={{
               position: 'absolute',

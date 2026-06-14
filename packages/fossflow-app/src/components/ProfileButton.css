@@ -1,0 +1,114 @@
+.profile-btn-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid var(--border-color);
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  overflow: hidden;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar-btn:hover {
+  border-color: var(--btn-primary-bg);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profile-avatar-initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 210px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  z-index: 9999;
+  overflow: hidden;
+  padding: 6px;
+}
+
+.profile-dropdown-header {
+  padding: 10px 12px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.profile-dropdown-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  display: block;
+}
+
+.profile-dropdown-email {
+  font-size: 11px;
+  color: var(--text-secondary);
+  word-break: break-all;
+  display: block;
+}
+
+.profile-dropdown-divider {
+  height: 1px;
+  background: var(--border-color);
+  margin: 4px 0;
+}
+
+.profile-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  text-decoration: none;
+  transition: background 0.1s;
+  box-sizing: border-box;
+}
+
+.profile-dropdown-item:hover {
+  background: var(--bg-secondary);
+}
+
+.profile-dropdown-signout {
+  color: #ef4444;
+}
+
+.profile-dropdown-signout:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}

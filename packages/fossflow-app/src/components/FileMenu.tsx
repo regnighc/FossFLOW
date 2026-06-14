@@ -31,17 +31,14 @@ export function FileMenu({ actions, hasUnsavedChanges }: FileMenuProps) {
       <button
         className={`file-menu-trigger ${open ? 'open' : ''} ${hasUnsavedChanges ? 'unsaved' : ''}`}
         onClick={() => setOpen(o => !o)}
-        title="File"
+        title="Menu"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
-          <path d="M2 2h6l2 2h2v8H2V2z" fill="none" stroke="currentColor" strokeWidth="1.2"/>
-          <path d="M5 7h4M5 9h2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/>
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <rect x="2" y="3.25" width="12" height="1.5" rx="0.75"/>
+          <rect x="2" y="7.25" width="12" height="1.5" rx="0.75"/>
+          <rect x="2" y="11.25" width="12" height="1.5" rx="0.75"/>
         </svg>
-        File
         {hasUnsavedChanges && <span className="unsaved-dot" />}
-        <svg className="chevron" width="10" height="10" viewBox="0 0 10 10" fill="currentColor">
-          <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round"/>
-        </svg>
       </button>
 
       {open && (

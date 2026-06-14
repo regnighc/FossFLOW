@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { Isoflow } from 'fossflow';
+import type { IsoflowControls, IsoflowUiState } from 'fossflow';
 import { flattenCollections } from '@isoflow/isopacks/dist/utils';
 import isoflowIsopack from '@isoflow/isopacks/dist/isoflow';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +9,7 @@ import { DiagramData } from './diagramUtils';
 import { useIconPackManager } from './services/iconPackManager';
 import svgPack1 from './services/svgPack1';
 import { allLocales } from 'fossflow';
-import { BrowserRouter, Route, Routes, useParams, useNavigate, useSearchParams, Navigate, Link } from 'react-router-dom';
+import { BrowserRouter, Route, Routes, useParams, useNavigate, useSearchParams, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { authService } from './services/authService';
 import { LoginPage } from './pages/LoginPage';
@@ -17,6 +18,7 @@ import { DrawingsPage } from './pages/DrawingsPage';
 import { AdminPage } from './pages/AdminPage';
 import { FileMenu, FileMenuAction } from './components/FileMenu';
 import { ViewTabBar } from './components/ViewTabBar';
+import { ProfileButton } from './components/ProfileButton';
 import ChangeLanguage from './components/ChangeLanguage';
 import './App.css';
 
@@ -79,7 +81,7 @@ function applyTheme(theme: 'light' | 'dark') {
 
 async function captureThumbnail(): Promise<string | null> {
   try {
-    const el = document.querySelector('.fossflow-container') as HTMLElement | null;
+    const el = document.querySelector('[data-ff-renderer]') as HTMLElement | null;
     if (!el) return null;
     // Capture at natural size, then downscale via canvas to 320×200
     const dataUrl = await htmlToImage.toPng(el, { quality: 0.8, skipFonts: true });
@@ -108,7 +110,7 @@ async function captureThumbnail(): Promise<string | null> {
 }
 
 async function exportCanvasImage(name: string, backgroundColor?: string) {
-  const el = document.querySelector('.fossflow-container') as HTMLElement | null;
+  const el = document.querySelector('[data-ff-renderer]') as HTMLElement | null;
   if (!el) { alert('Could not capture the diagram.'); return; }
   try {
     const dataUrl = await htmlToImage.toPng(el, {
@@ -259,6 +261,10 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
       fitToScreen: true
     }
   );
+
+  // Isoflow imperative control bridge
+  const isoflowControlsRef = useRef<IsoflowControls | null>(null);
+  const [isoflowUiState, setIsoflowUiState] = useState<IsoflowUiState | null>(null);
 
   // Refs for debounced model updates — avoids React re-renders on every pan frame.
   // Initialised from persisted state so navigation-restore works immediately.
@@ -641,29 +647,34 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
 
   const fileActions: FileMenuAction[] = [
     {
+      label: 'New Drawing',
+      icon: '📝',
+      onClick: handleNewDiagram,
+      disabled: isReadonlyUrl
+    },
+    {
+      label: 'My Drawings',
+      icon: '🗂️',
+      onClick: () => navigate('/drawings'),
+      disabled: isReadonlyUrl
+    },
+    {
       label: 'Save to Account',
       icon: '☁️',
       onClick: handleSaveToAccount,
-      disabled: isReadonlyUrl
+      disabled: isReadonlyUrl,
+      divider: true
     },
     {
       label: 'Save to JSON',
       icon: '📄',
-      onClick: handleSaveToJson,
-      divider: false
-    },
-    {
-      label: 'Load Drawing',
-      icon: '📂',
-      onClick: () => navigate('/drawings'),
-      disabled: isReadonlyUrl
+      onClick: handleSaveToJson
     },
     {
       label: 'Import JSON',
       icon: '📥',
       onClick: handleLoadJson,
-      disabled: isReadonlyUrl,
-      divider: false
+      disabled: isReadonlyUrl
     },
     {
       label: 'Export Image (PNG)',
@@ -676,46 +687,39 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
   return (
     <div className="App">
       <div className="toolbar">
-        {!isReadonlyUrl && (
-          <>
-            <button className="toolbar-btn" onClick={handleNewDiagram}>New</button>
-            <FileMenu actions={fileActions} hasUnsavedChanges={hasUnsavedChanges} />
-            {user && (
-              <Link to="/drawings" className="toolbar-btn toolbar-btn-drawings">
-                My Drawings
-                {quota && <span className="quota-chip">{quota.used}/{quota.total}</span>}
-              </Link>
-            )}
-          </>
-        )}
-
-        {isReadonlyUrl && (
+        {!isReadonlyUrl ? (
+          <FileMenu actions={fileActions} hasUnsavedChanges={hasUnsavedChanges} />
+        ) : (
           <div className="readonly-badge">Read-only</div>
         )}
 
         <div className="toolbar-spacer" />
 
-        {/* Editable diagram name */}
-        {editingName ? (
-          <input
-            ref={nameInputRef}
-            className="diagram-name-input"
-            value={nameInputValue}
-            onChange={e => setNameInputValue(e.target.value)}
-            onBlur={commitNameEdit}
-            onKeyDown={e => { if (e.key === 'Enter') commitNameEdit(); if (e.key === 'Escape') setEditingName(false); }}
-            maxLength={100}
-          />
-        ) : (
-          <span
-            className={`current-diagram-name ${!isReadonlyUrl ? 'editable' : ''}`}
-            onClick={startEditingName}
-            title={!isReadonlyUrl ? 'Click to rename' : diagramName}
-          >
-            {diagramName}
-            {hasUnsavedChanges && !isReadonlyUrl && <span className="unsaved-indicator"> •</span>}
-          </span>
-        )}
+        {/* Absolutely centered diagram name */}
+        <div className="toolbar-center">
+          {editingName ? (
+            <input
+              ref={nameInputRef}
+              className="diagram-name-input"
+              value={nameInputValue}
+              onChange={e => setNameInputValue(e.target.value)}
+              onBlur={commitNameEdit}
+              onKeyDown={e => { if (e.key === 'Enter') commitNameEdit(); if (e.key === 'Escape') setEditingName(false); }}
+              maxLength={100}
+            />
+          ) : (
+            <span
+              className={`current-diagram-name ${!isReadonlyUrl ? 'editable' : ''}`}
+              onClick={startEditingName}
+              title={!isReadonlyUrl ? 'Click to rename' : diagramName}
+            >
+              {diagramName}
+              {hasUnsavedChanges && !isReadonlyUrl && <span className="unsaved-indicator"> •</span>}
+            </span>
+          )}
+        </div>
+
+        <div className="toolbar-spacer" />
 
         <ChangeLanguage />
 
@@ -728,23 +732,16 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
         </button>
 
         {user && !isReadonlyUrl && (
-          <div className="user-menu">
-            <button
-              className="user-name-btn"
-              onClick={() => { setPwError(''); setPwSuccess(''); setPwCurrent(''); setPwNew(''); setPwConfirm(''); setShowUserSettings(true); }}
-              title="Account settings"
-            >
-              {user.username}
-            </button>
-            {isAdmin && (
-              <Link to="/admin" className="toolbar-btn toolbar-btn-admin">
-                Admin
-              </Link>
-            )}
-            <button className="toolbar-btn" onClick={() => { logout(); navigate('/login'); }}>
-              Sign Out
-            </button>
-          </div>
+          <ProfileButton
+            username={user.username}
+            email={user.email || ''}
+            isAdmin={isAdmin}
+            onChangePassword={() => {
+              setPwError(''); setPwSuccess(''); setPwCurrent(''); setPwNew(''); setPwConfirm('');
+              setShowUserSettings(true);
+            }}
+            onSignOut={() => { logout(); navigate('/login'); }}
+          />
         )}
       </div>
 
@@ -765,6 +762,12 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
               iconPackManager.togglePack(packName as any, enabled);
             }
           }}
+          controlRef={isoflowControlsRef}
+          onUiStateChange={setIsoflowUiState}
+          hideMainMenu
+          hideToolMenu
+          hideZoomControls
+          hideViewTitle
         />
       </div>
 
@@ -776,6 +779,8 @@ function EditorPage({ theme, toggleTheme }: EditorPageProps) {
         onRename={renameView}
         onDelete={deleteView}
         readonly={isReadonlyUrl}
+        controls={isoflowUiState ? isoflowControlsRef.current : null}
+        uiState={isoflowUiState}
       />
 
       {/* Save to Account Dialog */}

@@ -47,6 +47,7 @@ export const Renderer = ({ showGrid, backgroundColor }: RendererProps) => {
   return (
     <Box
       ref={containerRef}
+      data-ff-renderer="true"
       sx={{
         position: 'absolute',
         top: 0,

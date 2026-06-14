@@ -1,3 +1,4 @@
+import type React from 'react';
 import type { EditorModeEnum, MainMenuOptions } from './common';
 import type { Model } from './model';
 import type { RendererProps } from './rendererProps';
@@ -219,6 +220,25 @@ export interface IconPackManagerProps {
   onTogglePack: (packName: string, enabled: boolean) => void;
 }
 
+/** Imperative control handle — populated by Isoflow, consumed by external toolbars */
+export interface IsoflowControls {
+  setMode: (modeType: string) => void;
+  undo: () => void;
+  redo: () => void;
+  incrementZoom: () => void;
+  decrementZoom: () => void;
+  fitToView: () => void;
+  openHelp: () => void;
+}
+
+/** Snapshot of UI state fired via onUiStateChange */
+export interface IsoflowUiState {
+  modeType: string;
+  zoom: number;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+
 export interface IsoflowProps {
   initialData?: InitialData;
   mainMenuOptions?: MainMenuOptions;
@@ -230,4 +250,10 @@ export interface IsoflowProps {
   renderer?: RendererProps;
   locale?: LocaleProps;
   iconPackManager?: IconPackManagerProps;
+  controlRef?: React.MutableRefObject<IsoflowControls | null>;
+  onUiStateChange?: (state: IsoflowUiState) => void;
+  hideMainMenu?: boolean;
+  hideToolMenu?: boolean;
+  hideZoomControls?: boolean;
+  hideViewTitle?: boolean;
 }

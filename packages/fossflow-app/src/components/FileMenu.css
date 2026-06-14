@@ -5,8 +5,8 @@
 .file-menu-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 4px;
+  padding: 7px 10px;
   background: var(--bg-primary);
   color: var(--text-primary);
   border: 1px solid var(--border-color);
